@@ -1298,5 +1298,34 @@ class Membership extends AdminController
         $this->membership_model->delete_position($id);
         set_alert('success', _l('membership_position_deleted'));
         redirect(admin_url('membership/positions'));
+    public function get_board_member_details($id)
+    {
+        if (!is_admin()) {
+            access_denied();
+        }
+
+        $member = $this->membership_model->get_board_member($id);
+
+        if ($member) {
+            // Also get election title if available
+            if (!empty($member['election_id'])) {
+                $election = $this->membership_model->get_election($member['election_id']);
+                $member['election_title'] = $election ? $election['title'] : '';
+            }
+
+            // Get manifesto from nomination if available
+            if (!empty($member['member_id'])) {
+                $nomination = $this->membership_model->get_nomination_by_member_and_election($member['member_id'], $member['election_id'] ?? null);
+                $member['manifesto'] = $nomination ? $nomination['manifesto'] : '';
+            }
+
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => true, 'member' => $member]));
+        } else {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => false, 'message' => _l('membership_board_member_not_found')]));
+        }
     }
 }

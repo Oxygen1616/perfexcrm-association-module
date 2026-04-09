@@ -16,14 +16,14 @@
                 <div class="row">
                     <?php foreach ($elections as $election): ?>
                         <div class="col-md-6 tw-mb-4">
-                            <div class="panel panel-default">
+                            <div class="panel panel-default" onclick="showElectionDetail(<?php echo $election['id']; ?>)" style="cursor:pointer;">
                                 <div class="panel-heading">
                                     <h5><?php echo e($election['title']); ?></h5>
                                 </div>
                                 <div class="panel-body">
                                     <p><?php echo $election['description'] ? e(substr($election['description'], 0, 100)) . '...' : '-'; ?></p>
-                                    <p><strong><?php echo _l('membership_period'); ?>:</strong> 
-                                        <?php echo date('M d, Y', strtotime($election['start_date'])); ?> - 
+                                    <p><strong><?php echo _l('membership_period'); ?>:</strong>
+                                        <?php echo date('M d, Y', strtotime($election['start_date'])); ?> -
                                         <?php echo date('M d, Y', strtotime($election['end_date'])); ?>
                                     </p>
                                     <p>
@@ -76,3 +76,52 @@
     </div>
     <?php endif; ?>
 </div>
+
+<script>
+function showElectionDetail(electionId) {
+    // Use AJAX to fetch election details
+    $.post("<?php echo site_url('membership/client/get_election_details'); ?>", { election_id: electionId })
+        .done(function(data) {
+            if (data.success) {
+                // Create modal/popup
+                const modalHtml = `
+                    <div class="modal fade" id="electionDetailModal" tabindex="-1" role="dialog">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">${data.election.title}</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <p><strong>Description:</strong> ${data.election.description}</p>
+                                    <p><strong>Period:</strong> ${data.election.start_date} to ${data.election.end_date}</p>
+                                    <p><strong>Status:</strong> ${data.election.status}</p>
+                                    ${data.election.nomination_fee ? `<p><strong>Nomination Fee:</strong> ${data.election.nomination_fee} ${data.election.nomination_currency}</p>` : ''}
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Append to body and show
+                $('body').append(modalHtml);
+                $('#electionDetailModal').modal('show');
+
+                // Remove modal when hidden
+                $('#electionDetailModal').on('hidden.bs.modal', function () {
+                    $(this).remove();
+                });
+            } else {
+                alert('Failed to load election details');
+            }
+        })
+        .fail(function() {
+            alert('Error loading election details');
+        });
+}
+</script>

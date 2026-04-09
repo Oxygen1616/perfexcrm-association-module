@@ -9,7 +9,7 @@
                         <h4><?php echo _l('membership_board_members'); ?></h4>
                     </li>
                     <li class="col-md-6 text-right">
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#boardMemberModal">
+                        <button type="button" class="btn btn-primary" onclick="openAddBoardMemberModal()">
                             <?php echo _l('membership_add_board_member'); ?>
                         </button>
                     </li>
@@ -29,31 +29,51 @@
                                         <th><?php echo _l('membership_position'); ?></th>
                                         <th><?php echo _l('membership_term'); ?></th>
                                         <th><?php echo _l('membership_status'); ?></th>
-                                        <th><?php echo _l('membership_actions'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($board_members as $member): ?>
+                                        <?php
+                                        $this->load->model('clients_model');
+                                        $contact = $this->clients_model->get_contact($member['member_id']);
+                                        $name = $contact ? $contact->firstname . ' ' . $contact->lastname : 'Unknown';
+                                        $email = $contact ? $contact->email : '';
+                                        ?>
                                         <tr>
-                                            <td><?php echo $member['firstname'] . ' ' . $member['lastname']; ?></td>
-                                            <td><?php echo $member['email']; ?></td>
-                                            <td><?php echo $member['position']; ?></td>
                                             <td>
-                                                <?php echo date('M Y', strtotime($member['term_start'])); ?> - 
+                                                <a href="#" onclick="showBoardMemberDetails(<?php echo $member['id']; ?>)"
+                                                   data-toggle="modal" data-target="#boardMemberModal">
+                                                    <?php echo e($name); ?>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <?php if ($contact): ?>
+                                                    <a href="#" onclick="showBoardMemberDetails(<?php echo $member['id']; ?>)"
+                                                       data-toggle="modal" data-target="#boardMemberModal">
+                                                        <?php echo e($email); ?>
+                                                    </a>
+                                                <?php else: ?>
+                                                    N/A
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($contact): ?>
+                                                    <a href="#" onclick="showBoardMemberDetails(<?php echo $member['id']; ?>)"
+                                                       data-toggle="modal" data-target="#boardMemberModal">
+                                                        <?php echo e($member['position']); ?>
+                                                    </a>
+                                                <?php else: ?>
+                                                    <?php echo e($member['position']); ?>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php echo date('M Y', strtotime($member['term_start'])); ?> -
                                                 <?php echo $member['term_end'] ? date('M Y', strtotime($member['term_end'])) : 'Present'; ?>
                                             </td>
                                             <td>
                                                 <span class="label label-<?php echo $member['status'] == 'active' ? 'success' : 'danger'; ?>">
                                                     <?php echo ucfirst($member['status']); ?>
                                                 </span>
-                                            </td>
-                                            <td>
-                                                <button type="button" class="btn btn-default btn-xs" onclick="editBoardMember(<?php echo $member['id']; ?>, <?php echo $member['member_id']; ?>, '<?php echo htmlspecialchars($member['position']); ?>', '<?php echo $member['election_id']; ?>', '<?php echo $member['term_start']; ?>', '<?php echo $member['term_end']; ?>', '<?php echo $member['status']; ?>')">
-                                                    <i class="fa fa-pencil"></i> <?php echo _l('membership_edit'); ?>
-                                                </button>
-                                                <a href="<?php echo admin_url('membership/delete_board_member/' . $member['id']); ?>" class="btn btn-danger btn-xs" onclick="return confirm('<?php echo _l('membership_delete_confirm'); ?>')">
-                                                    <i class="fa fa-trash"></i> <?php echo _l('membership_delete'); ?>
-                                                </a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -71,29 +91,60 @@
     </div>
 </div>
 
+<!-- Board Member Modal -->
 <div class="modal fade" id="boardMemberModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="boardMemberModalLabel"><?php echo _l('membership_board_member_details'); ?></h4>
+            </div>
+            <div class="modal-body" id="boardMemberModalBody">
+                <!-- Board member details will be loaded here via AJAX -->
+            </div>
+            <div class="modal-footer">
+                <div class="row">
+                    <div class="col-md-6">
+                        <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo _l('membership_close'); ?></button>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <button type="button" class="btn btn-default" onclick="editBoardMemberModal(<?php echo $member['id']; ?>)">
+                            <?php echo _l('membership_edit'); ?>
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="deleteBoardMemberModal(<?php echo $member['id']; ?>)">
+                            <?php echo _l('membership_delete'); ?>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Board Member Modal -->
+<div class="modal fade" id="addBoardMemberModal" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title"><?php echo _l('membership_add_board_member'); ?></h4>
+                <h4 class="modal-title" id="boardMemberFormTitle"><?php echo _l('membership_add_board_member'); ?></h4>
             </div>
             <?php echo form_open(admin_url('membership/board_members')); ?>
             <div class="modal-body">
-                <input type="hidden" name="id" id="bmember_id" value="">
+                <input type="hidden" name="id" id="bmember_id">
                 <div class="row">
                     <div class="col-md-12">
                         <div class="form-group">
                             <label><?php echo _l('membership_select_member'); ?> *</label>
-                            <select name="member_id" id="bmember_member_id" class="form-control" required>
+                            <select name="member_id" id="bmember_member_id" class="form-control selectpicker" data-live-search="true" required>
                                 <option value=""><?php echo _l('membership_select_member'); ?></option>
                                 <?php foreach ($members as $m): ?>
                                     <?php
                                     $this->load->model('clients_model');
                                     $contact = $this->clients_model->get_contact($m['contact_id']);
-                                    $name = $contact ? $contact->firstname . ' ' . $contact->lastname : 'Unknown';
+                                    $contact_name = $contact ? $contact->firstname . ' ' . $contact->lastname : 'Unknown';
                                     ?>
-                                    <option value="<?php echo $m['id']; ?>"><?php echo $name; ?></option>
+                                    <option value="<?php echo $m['id']; ?>"><?php echo e($contact_name); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -114,7 +165,7 @@
                             <select name="election_id" id="bmember_election_id" class="form-control">
                                 <option value=""><?php echo _l('membership_select_election'); ?></option>
                                 <?php foreach ($elections as $e): ?>
-                                    <option value="<?php echo $e['id']; ?>"><?php echo $e['title']; ?></option>
+                                    <option value="<?php echo $e['id']; ?>"><?php echo e($e['title']); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -148,7 +199,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo _l('membership_cancel'); ?></button>
-                <button type="submit" class="btn btn-primary"><?php echo _l('membership_save'); ?></button>
+                <button type="submit" class="btn btn-info"><?php echo _l('membership_submit'); ?></button>
             </div>
             <?php echo form_close(); ?>
         </div>
@@ -156,28 +207,106 @@
 </div>
 
 <script>
-function editBoardMember(id, member_id, position, election_id, term_start, term_end, status) {
-    document.getElementById('bmember_id').value = id;
-    document.getElementById('bmember_member_id').value = member_id || '';
-    document.getElementById('bmember_position').value = position;
-    document.getElementById('bmember_election_id').value = election_id || '';
-    document.getElementById('bmember_term_start').value = term_start || '';
-    document.getElementById('bmember_term_end').value = term_end || '';
-    document.getElementById('bmember_status').value = status;
-    document.querySelector('#boardMemberModal .modal-title').textContent = '<?php echo _l('membership_edit_board_member'); ?>';
-    $('#boardMemberModal').modal('show');
+function openAddBoardMemberModal() {
+    $('#bmember_id').val('');
+    $('#boardMemberFormTitle').text('<?= _l('membership_add_board_member') ?>');
+    $('#bmember_member_id').val('');
+    $('#bmember_position').val('');
+    $('#bmember_election_id').val('');
+    $('#bmember_term_start').val('');
+    $('#bmember_term_end').val('');
+    $('#bmember_status').val('active');
+    $('#addBoardMemberModal').modal('show');
 }
 
-$('#boardMemberModal').on('hidden.bs.modal', function() {
-    document.getElementById('bmember_id').value = '';
-    document.getElementById('bmember_member_id').value = '';
-    document.getElementById('bmember_position').value = '';
-    document.getElementById('bmember_election_id').value = '';
-    document.getElementById('bmember_term_start').value = '';
-    document.getElementById('bmember_term_end').value = '';
-    document.getElementById('bmember_status').value = 'active';
-    document.querySelector('#boardMemberModal .modal-title').textContent = '<?php echo _l('membership_add_board_member'); ?>';
+function showBoardMemberDetails(memberId) {
+    $('#boardMemberModalLabel').text('<?= _l('membership_loading') ?>...');
+    $('#boardMemberModalBody').html('<p class="text-center"><i class="fa fa-spinner fa-spin"></i></p>');
+
+    // Set up buttons for edit/delete
+    $('#boardMemberModal .modal-footer').html(`
+        <div class="row">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-default" data-dismiss="modal"><?= _l('membership_close') ?></button>
+            </div>
+            <div class="col-md-6 text-right">
+                <button type="button" class="btn btn-default" onclick="editBoardMemberModal(${memberId})">
+                    <?= _l('membership_edit') ?>
+                </button>
+                <button type="button" class="btn btn-danger" onclick="deleteBoardMemberModal(${memberId})">
+                    <?= _l('membership_delete') ?>
+                </button>
+            </div>
+        </div>
+    ");
+
+    $('#boardMemberModal').modal('show');
+
+    $.get("<?= admin_url('membership/ajax_get_board_member') ?>/" + memberId, function(response) {
+        if (response.success) {
+            var member = response.member;
+            $('#boardMemberModalLabel').text(member.firstname + ' ' + member.lastname);
+            $('#boardMemberModalBody').html(`
+                <p><strong><?= _l('membership_position') ?>:</strong> ${member.position || '-'}</p>
+                <p><strong><?= _l('membership_email') ?>:</strong> ${member.email || '-'}</p>
+                <p><strong><?= _l('membership_election') ?>:</strong> ${member.election_title || '-'}</p>
+                <p><strong><?= _l('membership_term') ?>:</strong>
+                    ${member.term_start ? <?= _dt('member.term_start') ?> : '-'} -
+                    ${member.term_end ? <?= _dt('member.term_end') ?> : '<?= _l('membership_present') ?>'}
+                </p>
+                <p><strong><?= _l('membership_status') ?>:</strong> ${ucfirst(member.status || '')}</p>
+                ${member.manifesto ? `<p><strong><?= _l('membership_manifesto') ?>:</strong> ${member.manifesto}</p>` : ''}
+            `);
+        } else {
+            $('#boardMemberModalBody').html('<p class="text-danger">' + response.message + '</p>');
+        }
+    });
+}
+
+function editBoardMemberModal(memberId) {
+    $('#boardMemberModal').modal('hide');
+
+    // Show loading in edit modal
+    $('#bmember_id').val(memberId);
+    $('#boardMemberFormTitle').text('<?= _l('membership_edit_board_member') ?>');
+
+    $.get("<?= admin_url('membership/ajax_get_board_member') ?>/" + memberId, function(response) {
+        if (response.success) {
+            var member = response.member;
+            $('#bmember_member_id').val(member.member_id || '');
+            $('#bmember_position').val(member.position || '');
+            $('#bmember_election_id').val(member.election_id || '');
+            $('#bmember_term_start').val(member.term_start || '');
+            $('#bmember_term_end').val(member.term_end || '');
+            $('#bmember_status').val(member.status || 'active');
+            $('#addBoardMemberModal').modal('show');
+        } else {
+            alert_float('danger', response.message);
+        }
+    });
+}
+
+function deleteBoardMemberModal(memberId) {
+    if (confirm('<?= _l('membership_delete_confirm') ?>')) {
+        window.location.href = "<?= admin_url('membership/delete_board_member/') ?>" + memberId;
+    }
+}
+
+$('#boardMemberModal').on('hidden.bs.modal', function () {
+    $('#boardMemberModalLabel').text('<?= _l('membership_board_member_details') ?>');
+    $('#boardMemberModalBody').empty();
+    $('#boardMemberModal .modal-footer').empty();
+});
+
+$('#addBoardMemberModal').on('hidden.bs.modal', function () {
+    $('#bmember_id').val('');
+    $('#boardMemberFormTitle').text('<?= _l('membership_add_board_member') ?>');
+    $('#bmember_member_id').val('');
+    $('#bmember_position').val('');
+    $('#bmember_election_id').val('');
+    $('#bmember_term_start').val('');
+    $('#bmember_term_end').val('');
+    $('#bmember_status').val('active');
 });
 </script>
-
 <?php init_tail(); ?>

@@ -110,7 +110,7 @@
                                 <tr>
                                     <td>#<?php echo format_invoice_number($invoice['id']); ?></td>
                                     <td><?php echo _d($invoice['date']); ?></td>
-                                    <td><?php echo format_money($invoice['total']); ?></td>
+                                    <td><?php echo app_format_money($invoice['total']); ?></td>
                                     <td>
                                         <span class="label label-<?php echo ($invoice['status'] == 3 ? 'success' : ($invoice['status'] == 4 ? 'default' : ($invoice['status'] == 1 ? 'warning' : 'danger'))); ?>">
                                             <?php echo format_invoice_status($invoice['status']); ?>

@@ -216,9 +216,9 @@ function membership_module_init_menu_items()
         ]);
 
         $CI->app_menu->add_sidebar_children_item('membership', [
-            'slug'     => 'membership_payments',
-            'name'     => 'Payments',
-            'href'     => admin_url('membership/payments'),
+            'slug'     => 'membership_positions',
+            'name'     => 'Positions',
+            'href'     => admin_url('membership/positions'),
             'position' => 5,
         ]);
 
@@ -227,13 +227,6 @@ function membership_module_init_menu_items()
             'name'     => 'Notice',
             'href'     => admin_url('membership/notices'),
             'position' => 6,
-        ]);
-
-        $CI->app_menu->add_sidebar_children_item('membership', [
-            'slug'     => 'membership_transactions',
-            'name'     => 'Transactions',
-            'href'     => admin_url('membership/all_transactions'),
-            'position' => 7,
         ]);
 
         $CI->app_menu->add_sidebar_children_item('membership', [

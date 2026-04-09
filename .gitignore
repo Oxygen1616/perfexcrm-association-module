@@ -1,0 +1,55 @@
+﻿# Environment and dependencies
+.env
+/node_modules/
+/vendor/
+
+# Logs and temp files
+/logs/*.log
+/temp/
+/memory/
+/backups/
+/*.zip
+
+# System files
+nul
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Debug and test files
+debug_*.php
+test_*.php
+temp_*.php
+check_*.php
+simple_*.php
+install_*.php
+bootstrap_install.php
+add_committee_id_column.php
+check_election_status.php
+check_tables.php
+debug_controller.php
+debug_simple.php
+simple_election_check.php
+temp_install.php
+test_access.php
+test_client_controller.php
+
+# Package manager files (if not needed in repo)
+package.json
+webpack.mix.js
+tailwind.config.js
+cookies.txt
+
+# IDE directories
+.agents/
+.claude/
+.opencode/
+.vscode/
+.idea/
+
+# Module zips
+*.zip
+modules/*.zip
+
+# Git ignore for MCP
+mcp-perfex-crm/

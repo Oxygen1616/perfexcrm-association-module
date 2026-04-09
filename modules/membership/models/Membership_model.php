@@ -28,6 +28,7 @@ class Membership_model extends CI_Model
     protected $table_nomination_transactions = 'tblmembership_nomination_transactions';
     protected $table_board_members = 'tblmembership_board_members';
     protected $table_vote_comments = 'tblmembership_vote_comments';
+    protected $table_positions = 'tblmembership_positions';
 
     public function __construct()
     {
@@ -418,7 +419,8 @@ class Membership_model extends CI_Model
     {
         $this->db->select('mn.*, tc.firstname, tc.lastname, tc.email, mn.position, mn.manifesto');
         $this->db->from($this->table_nominations . ' mn');
-        $this->db->join(db_prefix() . 'contacts tc', 'tc.id = mn.contact_id');
+        $this->db->join($this->table . ' tm', 'tm.id = mn.member_id');
+        $this->db->join(db_prefix() . 'contacts tc', 'tc.id = tm.contact_id');
         $this->db->where('mn.election_id', $election_id);
         $this->db->where('mn.status', 'approved');
         return $this->db->get()->result_array();
@@ -1206,6 +1208,18 @@ class Membership_model extends CI_Model
         return $this->db->get()->result_array();
     }
 
+    public function get_vote_history_by_member($member_id)
+    {
+        $this->db->where('mv.contact_id', $member_id);
+        $this->db->select('mv.*, me.title as election_title, cand.firstname as candidate_firstname, cand.lastname as candidate_lastname');
+        $this->db->from($this->table_votes . ' mv');
+        $this->db->join($this->table_elections . ' me', 'me.id = mv.election_id', 'left');
+        $this->db->join(db_prefix() . 'contacts cand', 'cand.id = mc.contact_id', 'left');
+        $this->db->join($this->table_candidates . ' mc', 'mc.id = mv.candidate_id', 'left');
+        $this->db->order_by('mv.voted_at', 'DESC');
+        return $this->db->get()->result_array();
+    }
+
     public function get_nomination_positions()
     {
         $positions = get_option('membership_nomination_positions');
@@ -1213,5 +1227,21 @@ class Membership_model extends CI_Model
             return ['President', 'Vice President', 'Secretary', 'Treasurer', 'Public Relations Officer'];
         }
         return array_filter(array_map('trim', explode("\n", $positions)));
+    }
+
+    public function get_position($id)
+    {
+        if (!$this->db->table_exists($this->table_positions)) {
+            return null;
+        }
+        if ($id) {
+            return $this->db->where('id', $id)->get($this->table_positions)->row_array();
+        }
+        return $this->db->order_by('name', 'ASC')->get($this->table_positions)->result_array();
+    }
+
+    public function get_positions()
+    {
+        return $this->get_position(null);
     }
 }

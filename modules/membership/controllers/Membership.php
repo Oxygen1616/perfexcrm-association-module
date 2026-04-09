@@ -415,17 +415,6 @@ class Membership extends AdminController
         redirect(admin_url('membership/elections'));
     }
 
-    public function payments()
-    {
-        if (!is_admin()) {
-            access_denied();
-        }
-
-        $data['title'] = _l('membership_payments');
-        $data['payments'] = $this->membership_model->get_payments();
-        $data['members'] = $this->membership_model->get_all_members('active');
-        $this->load->view('admin/payments', $data);
-    }
 
     public function settings()
     {
@@ -639,40 +628,6 @@ class Membership extends AdminController
         redirect(admin_url('membership/moderators'));
     }
 
-    public function all_transactions()
-    {
-        if (!is_admin()) {
-            access_denied();
-        }
-
-        $data['title'] = _l('membership_all_transactions');
-        $data['transactions'] = $this->membership_model->get_all_transactions();
-        $this->load->view('admin/all_transactions', $data);
-    }
-
-    public function event_transactions($status = '')
-    {
-        if (!is_admin()) {
-            access_denied();
-        }
-
-        $data['title'] = _l('membership_event_transactions');
-        $data['transactions'] = $this->membership_model->get_event_transactions($status ?: null);
-        $data['status_filter'] = $status;
-        $this->load->view('admin/event_transactions', $data);
-    }
-
-    public function subscription_transactions($status = '')
-    {
-        if (!is_admin()) {
-            access_denied();
-        }
-
-        $data['title'] = _l('membership_subscription_transactions');
-        $data['transactions'] = $this->membership_model->get_subscription_transactions($status ?: null);
-        $data['status_filter'] = $status;
-        $this->load->view('admin/subscription_transactions', $data);
-    }
 
     public function committee_categories()
     {
@@ -1298,6 +1253,8 @@ class Membership extends AdminController
         $this->membership_model->delete_position($id);
         set_alert('success', _l('membership_position_deleted'));
         redirect(admin_url('membership/positions'));
+    }
+
     public function get_board_member_details($id)
     {
         if (!is_admin()) {
@@ -1327,5 +1284,141 @@ class Membership extends AdminController
                 ->set_content_type('application/json')
                 ->set_output(json_encode(['success' => false, 'message' => _l('membership_board_member_not_found')]));
         }
+    }
+
+    public function ajax_get_member($id)
+    {
+        if (!is_admin()) {
+            access_denied();
+        }
+
+        $member = $this->membership_model->get_member($id);
+
+        if ($member) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => true, 'member' => $member]));
+        } else {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => false, 'message' => _l('membership_member_not_found')]));
+        }
+    }
+
+    public function ajax_get_position($id)
+    {
+        if (!is_admin()) {
+            access_denied();
+        }
+
+        $position = $this->membership_model->get_position($id);
+
+        if ($position) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => true, 'position' => $position]));
+        } else {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => false, 'message' => _l('membership_position_not_found')]));
+        }
+    }
+
+    public function ajax_get_board_member($id)
+    {
+        if (!is_admin()) {
+            access_denied();
+        }
+
+        $member = $this->membership_model->get_board_member($id);
+
+        if ($member) {
+            // Also get election title if available
+            if (!empty($member['election_id'])) {
+                $election = $this->membership_model->get_election($member['election_id']);
+                $member['election_title'] = $election ? $election['title'] : '';
+            }
+
+            // Get manifesto from nomination if available
+            if (!empty($member['member_id'])) {
+                $nomination = $this->membership_model->get_nomination_by_member_and_election($member['member_id'], $member['election_id'] ?? null);
+                $member['manifesto'] = $nomination ? $nomination['manifesto'] : '';
+            }
+
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => true, 'member' => $member]));
+        } else {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => false, 'message' => _l('membership_board_member_not_found')]));
+        }
+    }
+
+    public function ajax_get_committee($id)
+    {
+        if (!is_admin()) {
+            access_denied();
+        }
+
+        $committee = $this->membership_model->get_committee($id);
+
+        if ($committee) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => true, 'committee' => $committee]));
+        } else {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => false, 'message' => _l('membership_committee_not_found')]));
+        }
+    }
+
+    public function ajax_get_election_results($election_id)
+    {
+        if (!is_admin()) {
+            access_denied();
+        }
+
+        if (!$election_id) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => false, 'message' => _l('membership_select_election')]));
+            return;
+        }
+
+        $results = $this->membership_model->get_election_results($election_id);
+        $total_votes = $this->membership_model->get_total_votes($election_id);
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'success' => true,
+                'results' => $results,
+                'total_votes' => $total_votes
+            ]));
+    }
+
+    public function ajax_get_votes($election_id)
+    {
+        if (!is_admin()) {
+            access_denied();
+        }
+
+        if (!$election_id) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => false, 'message' => _l('membership_select_election')]));
+            return;
+        }
+
+        $votes = $this->membership_model->get_vote_list($election_id);
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'success' => true,
+                'votes' => $votes
+            ]));
     }
 }

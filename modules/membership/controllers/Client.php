@@ -353,9 +353,7 @@ class Client extends ClientsController
 
             $nominationData = [
                 'election_id'  => $election_id,
-                'committee_id' => $this->input->post('committee_id'),
                 'member_id'    => $nominated_member_id,
-                'position'     => $this->input->post('position'),
                 'manifesto'    => $this->input->post('manifesto'),
                 'photo'        => $photo_name,
                 'declaration'  => $this->input->post('declaration') ? 1 : 0,
@@ -415,7 +413,7 @@ class Client extends ClientsController
         }
 
         $data['elections'] = $this->membership_model->get_elections('active');
-        $data['selected_election'] = $this->input->get('election');
+        $data['selected_election'] = $this->input->get('election_id');
 
         if ($data['selected_election']) {
             $data['candidates'] = $this->membership_model->get_final_candidates($data['selected_election']);
@@ -453,5 +451,64 @@ class Client extends ClientsController
             ->title(_l('membership_board_members'))
             ->view('public/board_members')
             ->layout();
+    }
+
+    public function get_election_details()
+    {
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Not logged in']);
+            return;
+        }
+
+        $election_id = $this->input->post('election_id');
+        if (!$election_id) {
+            echo json_encode(['success' => false, 'message' => 'Election ID required']);
+            return;
+        }
+
+        $election = $this->membership_model->get_election($election_id);
+        if (!$election) {
+            echo json_encode(['success' => false, 'message' => 'Election not found']);
+            return;
+        }
+
+        echo json_encode(['success' => true, 'election' => $election]);
+    }
+
+    public function get_candidates()
+    {
+        $this->check_member_access();
+
+        $election_id = $this->input->get('election_id');
+        if (!$election_id) {
+            echo json_encode(['success' => false, 'message' => 'Election ID required']);
+            return;
+        }
+
+        $candidates = $this->membership_model->get_final_candidates($election_id);
+
+        if ($candidates) {
+            // Load the candidates view partial
+            $this->load->view('public/partials/_candidates_list', ['candidates' => $candidates, 'election_id' => $election_id]);
+        } else {
+            echo json_encode(['success' => false, 'message' => _l('membership_no_candidates')]);
+        }
+    }
+
+    public function get_vote_history()
+    {
+        if (!is_client_logged_in()) {
+            echo json_encode(['success' => false, 'message' => 'Not logged in']);
+            return;
+        }
+
+        $member = $this->membership_model->get_member_by_contact_id($this->contact_user_id);
+        if (!$member) {
+            echo json_encode(['success' => false, 'message' => 'Member not found']);
+            return;
+        }
+
+        $voteHistory = $this->membership_model->get_vote_history_by_member($member['id']);
+        echo json_encode(['success' => true, 'votes' => $voteHistory]);
     }
 }

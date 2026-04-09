@@ -25,7 +25,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="row">
                 <div class="col-md-12">
                     <div class="form-group">
@@ -39,61 +39,7 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label><?php echo _l('membership_position'); ?> *</label>
-                        <select name="position" class="form-control selectpicker" data-live-search="true" required>
-                            <option value=""><?php echo _l('membership_select_position'); ?></option>
-                            <?php foreach ($positions as $position): ?>
-                                <option value="<?php echo e($position); ?>"><?php echo e($position); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label><?php echo _l('membership_committee'); ?></label>
-                        <select name="committee_id" class="form-control selectpicker" data-live-search="true">
-                            <option value=""><?php echo _l('membership_select_committee'); ?></option>
-                            <?php foreach ($committees as $committee): ?>
-                                <option value="<?php echo $committee['id']; ?>"><?php echo e($committee['name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label><?php echo _l('membership_election_symbol'); ?></label>
-                        <select name="symbol_id" class="form-control selectpicker" data-live-search="true" onchange="show_symbol_preview(this.value)">
-                            <option value=""><?php echo _l('membership_select_symbol'); ?></option>
-                            <?php foreach ($symbols as $symbol): ?>
-                                <option value="<?php echo $symbol['id']; ?>" data-image="<?php echo site_url('uploads/membership/symbols/'.$symbol['image']); ?>"><?php echo e($symbol['name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label><?php echo _l('membership_photo'); ?> (jpg, jpeg, png)</label>
-                        <input type="file" name="photo" class="form-control" accept="image/jpeg,image/jpg,image/png">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row" id="symbol-preview-section" style="display:none;">
-                <div class="col-md-12">
-                    <div class="form-group">
-                        <label><?php echo _l('membership_selected_symbol'); ?></label>
-                        <div id="symbol-preview-container"></div>
-                    </div>
-                </div>
-            </div>
-            
+
             <div class="form-group">
                 <label><?php echo _l('membership_manifesto'); ?> *</label>
                 <textarea name="manifesto" class="form-control" rows="6" required placeholder="<?php echo _l('membership_manifesto_placeholder'); ?>"></textarea>

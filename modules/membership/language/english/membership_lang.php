@@ -387,6 +387,7 @@ $lang['membership_voter'] = 'Voter';
 $lang['membership_candidate'] = 'Candidate';
 $lang['membership_voted_at'] = 'Voted At';
 $lang['membership_no_votes'] = 'No votes recorded';
+$lang['membership_vote_history'] = 'My Vote History';
 
 $lang['membership_election_results'] = 'Election Results';
 $lang['membership_total_votes'] = 'Total Votes';

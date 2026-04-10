@@ -511,4 +511,17 @@ class Client extends ClientsController
         $voteHistory = $this->membership_model->get_vote_history_by_member($member['id']);
         echo json_encode(['success' => true, 'votes' => $voteHistory]);
     }
+
+    public function vote_history()
+    {
+        $this->check_member_access();
+
+        $member = $this->membership_model->get_member_by_contact_id($this->contact_user_id);
+        $data['vote_history'] = $this->membership_model->get_vote_history_by_member($this->contact_user_id);
+
+        $this->data($data)
+            ->title(_l('membership_vote_history'))
+            ->view('public/vote_history')
+            ->layout();
+    }
 }

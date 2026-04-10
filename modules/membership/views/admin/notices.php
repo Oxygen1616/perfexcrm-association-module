@@ -9,9 +9,9 @@
                         <h4><?php echo _l('membership_notices'); ?></h4>
                     </li>
                     <li class="col-md-6 text-right">
-                        <a href="<?php echo admin_url('membership/notices'); ?>" class="btn btn-primary">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#noticeModal">
                             <?php echo _l('membership_add_notice'); ?>
-                        </a>
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -54,12 +54,29 @@
                                             </td>
                                             <td><?php echo date('M d, Y', strtotime($notice['created_at'])); ?></td>
                                             <td>
-                                                <a href="<?php echo admin_url('membership/notices/' . $notice['id']); ?>" class="btn btn-default btn-xs">
-                                                    <i class="fa fa-pencil"></i> <?php echo _l('membership_edit'); ?>
+                                                <?php
+                                                $this->load->model('clients_model');
+                                                $contact = null;
+                                                if (!empty($notice['created_by'])) {
+                                                    $contact = $this->clients_model->get_contact($notice['created_by']);
+                                                }
+                                                $created_by = $contact ? $contact->firstname . ' ' . $contact->lastname : 'Unknown';
+                                                ?>
+                                                <a href="#" onclick="showNoticeDetails(<?php echo $notice['id']; ?>)"
+                                                   data-toggle="modal" data-target="#noticeModal">
+                                                    <?php echo e($notice['title']); ?>
                                                 </a>
-                                                <a href="<?php echo admin_url('membership/delete_notice/' . $notice['id']); ?>" class="btn btn-danger btn-xs" onclick="return confirm('<?php echo _l('membership_delete_confirm'); ?>')">
-                                                    <i class="fa fa-trash"></i> <?php echo _l('membership_delete'); ?>
-                                                </a>
+                                                <div class="row-options">
+                                                    <a href="#" onclick="editNotice(<?php echo $notice['id']; ?>)"
+                                                       data-toggle="modal" data-target="#noticeModal">
+                                                        <?php echo _l('membership_edit'); ?>
+                                                    </a>
+                                                    |
+                                                    <a href="<?php echo admin_url('membership/delete_notice/' . $notice['id']); ?>"
+                                                       onclick="return confirm('<?php echo _l('membership_delete_confirm'); ?>')">
+                                                        <?php echo _l('membership_delete'); ?>
+                                                    </a>
+                                                </div>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -137,7 +154,7 @@
     </div>
 </div>
 
-<?php if (isset($notice)): ?>
+<?php if (isset($notice) || $this->input->get('id')): ?>
 <script>
 $(document).ready(function() {
     $('#noticeModal').modal('show');

@@ -9,9 +9,9 @@
                         <h4><?php echo _l('membership_moderators'); ?></h4>
                     </li>
                     <li class="col-md-6 text-right">
-                        <a href="<?php echo admin_url('membership/moderators'); ?>" class="btn btn-primary">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#moderatorModal">
                             <?php echo _l('membership_add_moderator'); ?>
-                        </a>
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -126,7 +126,7 @@
     </div>
 </div>
 
-<?php if (isset($moderator)): ?>
+<?php if (isset($moderator) || !$this->input->get('id')): ?>
 <script>
 $(document).ready(function() {
     $('#moderatorModal').modal('show');

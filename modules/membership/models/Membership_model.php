@@ -1198,12 +1198,13 @@ class Membership_model extends CI_Model
         if ($election_id) {
             $this->db->where('mv.election_id', $election_id);
         }
-        $this->db->select('mv.*, me.title as election_title, mc.contact_id as candidate_contact_id, tc.firstname as voter_firstname, tc.lastname as voter_lastname, cand.firstname as candidate_firstname, cand.lastname as candidate_lastname');
+        $this->db->select('mv.*, me.title as election_title, mn.position as candidate_position, tc.firstname as voter_firstname, tc.lastname as voter_lastname, cand.firstname as candidate_firstname, cand.lastname as candidate_lastname, cand.email as candidate_email');
         $this->db->from($this->table_votes . ' mv');
         $this->db->join($this->table_elections . ' me', 'me.id = mv.election_id', 'left');
-        $this->db->join($this->table_candidates . ' mc', 'mc.id = mv.candidate_id', 'left');
+        $this->db->join($this->table_nominations . ' mn', 'mn.id = mv.candidate_id', 'left');
+        $this->db->join($this->table . ' tm', 'tm.id = mn.member_id', 'left');
         $this->db->join(db_prefix() . 'contacts tc', 'tc.id = mv.contact_id', 'left');
-        $this->db->join(db_prefix() . 'contacts cand', 'cand.id = mc.contact_id', 'left');
+        $this->db->join(db_prefix() . 'contacts cand', 'cand.id = tm.contact_id', 'left');
         $this->db->order_by('mv.voted_at', 'DESC');
         return $this->db->get()->result_array();
     }
@@ -1211,11 +1212,12 @@ class Membership_model extends CI_Model
     public function get_vote_history_by_member($member_id)
     {
         $this->db->where('mv.contact_id', $member_id);
-        $this->db->select('mv.*, me.title as election_title, cand.firstname as candidate_firstname, cand.lastname as candidate_lastname');
+        $this->db->select('mv.*, me.title as election_title, mn.position as candidate_position, cand.firstname as candidate_firstname, cand.lastname as candidate_lastname');
         $this->db->from($this->table_votes . ' mv');
         $this->db->join($this->table_elections . ' me', 'me.id = mv.election_id', 'left');
-        $this->db->join(db_prefix() . 'contacts cand', 'cand.id = mc.contact_id', 'left');
-        $this->db->join($this->table_candidates . ' mc', 'mc.id = mv.candidate_id', 'left');
+        $this->db->join($this->table_nominations . ' mn', 'mn.id = mv.candidate_id', 'left');
+        $this->db->join($this->table . ' tm', 'tm.id = mn.member_id', 'left');
+        $this->db->join(db_prefix() . 'contacts cand', 'cand.id = tm.contact_id', 'left');
         $this->db->order_by('mv.voted_at', 'DESC');
         return $this->db->get()->result_array();
     }
@@ -1243,5 +1245,19 @@ class Membership_model extends CI_Model
     public function get_positions()
     {
         return $this->get_position(null);
+    }
+
+    public function create_position($data)
+    {
+        $data['created_at'] = date('Y-m-d H:i:s');
+        $this->db->insert($this->table_positions, $data);
+        return $this->db->insert_id();
+    }
+
+    public function update_position($id, $data)
+    {
+        $data['updated_at'] = date('Y-m-d H:i:s');
+        $this->db->where('id', $id);
+        return $this->db->update($this->table_positions, $data);
     }
 }

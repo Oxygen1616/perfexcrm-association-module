@@ -35,25 +35,49 @@ class Membership extends AdminController
             access_denied();
         }
 
-        $member_id = $this->input->post('member_id');
-        if ($this->input->post() && $member_id) {
-            $data = [
-                'status' => $this->input->post('status'),
-                'membership_type' => $this->input->post('membership_type'),
-                'profession' => $this->input->post('profession'),
-                'graduation_year' => $this->input->post('graduation_year'),
-                'show_in_directory' => $this->input->post('show_in_directory') ? 1 : 0,
-            ];
-            $this->db->where('id', $member_id);
-            $this->db->update('tblmembership_members', $data);
-            set_alert('success', _l('membership_member_updated'));
+        if ($this->input->post()) {
+            $member_id = $this->input->post('member_id');
+
+            if ($member_id) {
+                // UPDATE existing member
+                $data = [
+                    'status'            => $this->input->post('status'),
+                    'membership_type'   => $this->input->post('membership_type'),
+                    'profession'        => $this->input->post('profession'),
+                    'join_date'         => $this->input->post('join_date') ?: null,
+                    'show_in_directory' => $this->input->post('show_in_directory') ? 1 : 0,
+                ];
+                $this->db->where('id', $member_id);
+                $this->db->update('tblmembership_members', $data);
+                set_alert('success', _l('membership_member_updated'));
+            } else {
+                // INSERT new member
+                $contact_id = $this->input->post('contact_id');
+                $this->load->model('clients_model');
+                $contact = $this->clients_model->get_contact($contact_id);
+
+                if ($contact) {
+                    $data = [
+                        'user_id'           => $contact->userid,
+                        'contact_id'        => $contact_id,
+                        'status'            => $this->input->post('status') ?: 'pending',
+                        'membership_type'   => $this->input->post('membership_type'),
+                        'profession'        => $this->input->post('profession'),
+                        'join_date'         => $this->input->post('join_date') ?: null,
+                        'show_in_directory' => $this->input->post('show_in_directory') ? 1 : 0,
+                    ];
+                    $this->db->insert('tblmembership_members', $data);
+                    set_alert('success', _l('membership_member_created'));
+                } else {
+                    set_alert('danger', _l('membership_contact_not_found'));
+                }
+            }
             redirect(admin_url('membership/members'));
         }
 
-        $data['title'] = _l('membership_members');
-        $data['members'] = $this->membership_model->get_all_members();
-        $this->load->model('clients_model');
-        $data['contacts'] = $this->clients_model->get_contacts();
+        $data['title']    = _l('membership_members');
+        $data['members']  = $this->membership_model->get_all_members();
+        $data['contacts'] = $this->membership_model->get_available_contacts();
 
         $this->load->view('admin/members', $data);
     }
@@ -71,12 +95,12 @@ class Membership extends AdminController
 
             if ($contact) {
                 $data = [
-                    'user_id' => $contact->userid,
-                    'contact_id' => $contact_id,
-                    'status' => $this->input->post('status') ?: 'pending',
-                    'membership_type' => $this->input->post('membership_type'),
-                    'profession' => $this->input->post('profession'),
-                    'graduation_year' => $this->input->post('graduation_year'),
+                    'user_id'          => $contact->userid,
+                    'contact_id'       => $contact_id,
+                    'status'           => $this->input->post('status') ?: 'pending',
+                    'membership_type'  => $this->input->post('membership_type'),
+                    'profession'       => $this->input->post('profession'),
+                    'join_date'        => $this->input->post('join_date') ?: null,
                     'show_in_directory' => $this->input->post('show_in_directory') ? 1 : 0,
                 ];
 
@@ -90,9 +114,8 @@ class Membership extends AdminController
             redirect(admin_url('membership/members'));
         }
 
-        $this->load->model('clients_model');
-        $data['title'] = _l('membership_add_member');
-        $data['contacts'] = $this->clients_model->get_contacts();
+        $data['title']    = _l('membership_add_member');
+        $data['contacts'] = $this->membership_model->get_available_contacts();
         $this->load->view('admin/add_member', $data);
     }
 
@@ -433,107 +456,6 @@ class Membership extends AdminController
 
         $data['title'] = _l('membership_settings');
         $this->load->view('admin/settings', $data);
-    }
-
-    public function notice_categories($id = '')
-    {
-        if (!is_admin()) {
-            access_denied();
-        }
-
-        if ($this->input->post()) {
-            if ($id == '') {
-                $data = [
-                    'name' => $this->input->post('name'),
-                    'description' => $this->input->post('description'),
-                ];
-                $this->membership_model->create_notice_category($data);
-                set_alert('success', _l('membership_notice_category_created'));
-            } else {
-                $data = [
-                    'name' => $this->input->post('name'),
-                    'description' => $this->input->post('description'),
-                ];
-                $this->membership_model->update_notice_category($id, $data);
-                set_alert('success', _l('membership_notice_category_updated'));
-            }
-            redirect(admin_url('membership/notice_categories'));
-        }
-
-        if ($id != '') {
-            $data['category'] = $this->membership_model->get_notice_categories($id);
-        }
-
-        $data['title'] = _l('membership_notice_categories');
-        $data['categories'] = $this->membership_model->get_notice_categories();
-        $this->load->view('admin/notice_categories', $data);
-    }
-
-    public function delete_notice_category($id)
-    {
-        if (!is_admin()) {
-            access_denied();
-        }
-
-        $this->membership_model->delete_notice_category($id);
-        set_alert('success', _l('membership_notice_category_deleted'));
-        redirect(admin_url('membership/notice_categories'));
-    }
-
-    public function notices($id = '')
-    {
-        if (!staff_can('view', 'membership')) {
-            access_denied();
-        }
-
-        if ($this->input->post()) {
-            if ($id == '') {
-                if (!staff_can('create', 'membership')) {
-                    access_denied();
-                }
-                $data = [
-                    'category_id' => $this->input->post('category_id'),
-                    'title' => $this->input->post('title'),
-                    'content' => $this->input->post('content'),
-                    'status' => $this->input->post('status'),
-                ];
-                $this->membership_model->create_notice($data);
-                set_alert('success', _l('membership_notice_created'));
-            } else {
-                if (!staff_can('edit', 'membership')) {
-                    access_denied();
-                }
-                $data = [
-                    'category_id' => $this->input->post('category_id'),
-                    'title' => $this->input->post('title'),
-                    'content' => $this->input->post('content'),
-                    'status' => $this->input->post('status'),
-                ];
-                $this->membership_model->update_notice($id, $data);
-                set_alert('success', _l('membership_notice_updated'));
-            }
-            redirect(admin_url('membership/notices'));
-        }
-
-        if ($id != '') {
-            $data['notice'] = $this->membership_model->get_notice($id);
-        }
-
-        $data['title'] = _l('membership_notices');
-        $data['notices'] = $this->membership_model->get_notices();
-        $data['categories'] = $this->membership_model->get_notice_categories();
-        $this->load->view('admin/notices', $data);
-    }
-
-    public function delete_notice($id)
-    {
-        if (!staff_can('delete', 'membership')) {
-            access_denied();
-        }
-
-        $this->membership_model->delete_notice($id);
-        set_alert('success', _l('membership_notice_deleted'));
-        redirect(admin_url('membership/notices'));
     }
 
     public function moderator_roles($id = '')

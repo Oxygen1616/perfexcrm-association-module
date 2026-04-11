@@ -41,14 +41,11 @@
                                         ?>
                                         <tr>
                                             <td>
-                                                <a href="#" onclick="showMemberDetails(<?php echo $member['id']; ?>)"
-                                                   data-toggle="modal" data-target="#memberModal"
-                                                   data-load-url="<?= admin_url('membership/ajax_get_member') ?>/<?php echo $member['id']; ?>">
+                                                <a href="#" onclick="showMemberDetails(<?php echo $member['id']; ?>); return false;">
                                                     <?php echo e($name); ?>
                                                 </a>
                                                 <div class="row-options">
-                                                    <a href="#" onclick="editMember(<?php echo $member['id']; ?>)"
-                                                       data-toggle="modal" data-target="#memberModal">
+                                                    <a href="#" onclick="editMember(<?php echo $member['id']; ?>); return false;">
                                                         <?php echo _l('membership_edit'); ?>
                                                     </a>
                                                     |
@@ -60,8 +57,7 @@
                                             </td>
                                             <td>
                                                 <?php if ($contact): ?>
-                                                    <a href="#" onclick="showMemberDetails(<?php echo $member['id']; ?>)"
-                                                       data-toggle="modal" data-target="#memberModal">
+                                                    <a href="#" onclick="showMemberDetails(<?php echo $member['id']; ?>); return false;">
                                                         <?php echo e($email); ?>
                                                     </a>
                                                 <?php else: ?>
@@ -119,7 +115,7 @@
             </div>
             <?php echo form_open(admin_url('membership/members')); ?>
             <div class="modal-body">
-                <input type="hidden" name="id" id="memberId">
+                <input type="hidden" name="member_id" id="memberId">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
@@ -141,7 +137,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label><?php echo _l('membership_member_status'); ?></label>
-                            <select name="status" class="form-control">
+                            <select name="status" id="member_status" class="form-control">
                                 <option value="pending"><?php echo _l('membership_status_pending'); ?></option>
                                 <option value="active"><?php echo _l('membership_status_active'); ?></option>
                                 <option value="suspended"><?php echo _l('membership_status_suspended'); ?></option>
@@ -164,8 +160,8 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label><?php echo _l('membership_graduation_year'); ?></label>
-                            <input type="number" name="graduation_year" class="form-control" id="member_graduation_year">
+                            <label><?php echo _l('membership_join_date'); ?></label>
+                            <input type="date" name="join_date" class="form-control" id="member_join_date">
                         </div>
                     </div>
                 </div>
@@ -191,10 +187,14 @@
 function openAddMemberModal() {
     $('#memberId').val('');
     $('#memberFormTitle').text('<?= _l('membership_add_member') ?>');
-    $('#member_contact_id').val('');
+    // Show the searchable select, hide the read-only display
+    $('#contact_select_group').show();
+    $('#contact_display_group').hide();
+    $('#member_contact_id').prop('required', true).val('').selectpicker('refresh');
+    $('#member_status').val('pending');
     $('#member_membership_type').val('');
     $('#member_profession').val('');
-    $('#member_graduation_year').val('');
+    $('#member_join_date').val('');
     $('#member_show_in_directory').prop('checked', true);
     $('#addMemberModal').modal('show');
 }
@@ -212,7 +212,7 @@ function showMemberDetails(memberId) {
                 <p><strong><?= _l('membership_member_email') ?>:</strong> ${member.email || '-'}</p>
                 <p><strong><?= _l('membership_membership_type') ?>:</strong> ${member.membership_type || '-'}</p>
                 <p><strong><?= _l('membership_member_profession') ?>:</strong> ${member.profession || '-'}</p>
-                <p><strong><?= _l('membership_graduation_year') ?>:</strong> ${member.graduation_year || '-'}</p>
+                <p><strong><?= _l('membership_join_date') ?>:</strong> ${member.join_date || '-'}</p>
                 <p><strong><?= _l('membership_show_in_directory') ?>:</strong> ${member.show_in_directory ? '<?= _l('membership_yes') ?>' : '<?= _l('membership_no') ?>'}</p>
                 <p><strong><?= _l('membership_status') ?>:</strong> ${ucfirst(member.status || '')}</p>
                 ${member.notes ? `<p><strong><?= _l('membership_notes') ?>:</strong> ${member.notes}</p>` : ''}
@@ -230,10 +230,17 @@ function editMember(memberId) {
     $.get("<?= admin_url('membership/ajax_get_member') ?>/" + memberId, function(response) {
         if (response.success) {
             var member = response.member;
-            $('#member_contact_id').val(member.contact_id || '');
+            // Hide the select, show the read-only contact name
+            $('#contact_select_group').hide();
+            $('#member_contact_id').prop('required', false);
+            $('#contact_display_group').show();
+            $('#member_contact_id_hidden').val(member.contact_id || '');
+            $('#member_contact_name').text((member.firstname || '') + ' ' + (member.lastname || '') + (member.email ? ' (' + member.email + ')' : ''));
+            // Populate all other fields with existing values
+            $('#member_status').val(member.status || 'pending');
             $('#member_membership_type').val(member.membership_type || '');
             $('#member_profession').val(member.profession || '');
-            $('#member_graduation_year').val(member.graduation_year || '');
+            $('#member_join_date').val(member.join_date || '');
             $('#member_show_in_directory').prop('checked', member.show_in_directory == 1);
             $('#addMemberModal').modal('show');
         } else {
@@ -250,10 +257,15 @@ $('#memberModal').on('hidden.bs.modal', function () {
 $('#addMemberModal').on('hidden.bs.modal', function () {
     $('#memberId').val('');
     $('#memberFormTitle').text('<?= _l('membership_add_member') ?>');
-    $('#member_contact_id').val('');
+    $('#contact_select_group').show();
+    $('#contact_display_group').hide();
+    $('#member_contact_id').prop('required', true).val('').selectpicker('refresh');
+    $('#member_contact_id_hidden').val('');
+    $('#member_contact_name').text('');
+    $('#member_status').val('pending');
     $('#member_membership_type').val('');
     $('#member_profession').val('');
-    $('#member_graduation_year').val('');
+    $('#member_join_date').val('');
     $('#member_show_in_directory').prop('checked', true);
 });
 </script>

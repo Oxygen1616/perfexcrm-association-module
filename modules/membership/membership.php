@@ -222,14 +222,7 @@ function membership_module_init_menu_items()
             'position' => 5,
         ]);
 
-        $CI->app_menu->add_sidebar_children_item('membership', [
-            'slug'     => 'membership_notice',
-            'name'     => 'Notice',
-            'href'     => admin_url('membership/notices'),
-            'position' => 6,
-        ]);
-
-        $CI->app_menu->add_sidebar_children_item('membership', [
+$CI->app_menu->add_sidebar_children_item('membership', [
             'slug'     => 'membership_moderator',
             'name'     => 'Moderator',
             'href'     => admin_url('membership/moderators'),

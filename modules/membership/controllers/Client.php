@@ -290,7 +290,7 @@ class Client extends ClientsController
             $updateData = [
                 'membership_type'   => $this->input->post('membership_type'),
                 'profession'        => $this->input->post('profession'),
-                'graduation_year'   => $this->input->post('graduation_year'),
+                'join_date'         => $this->input->post('join_date') ?: null,
                 'show_in_directory' => $this->input->post('show_in_directory') ? 1 : 0,
             ];
 

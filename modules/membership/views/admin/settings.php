@@ -7,6 +7,8 @@
                 <h4><?php echo _l('membership_settings'); ?></h4>
             </div>
         </div>
+
+        <!-- General Settings -->
         <div class="row">
             <div class="col-md-12">
                 <div class="panel_s">
@@ -51,6 +53,8 @@
                 </div>
             </div>
         </div>
+
+
     </div>
 </div>
 <?php init_tail(); ?>

@@ -13,8 +13,6 @@ class Membership_model extends CI_Model
     protected $table_candidates = 'tblmembership_candidates';
     protected $table_votes = 'tblmembership_votes';
     protected $table_payments = 'tblmembership_payments';
-    protected $table_notice_categories = 'tblmembership_notice_categories';
-    protected $table_notices = 'tblmembership_notices';
     protected $table_moderator_roles = 'tblmembership_moderator_roles';
     protected $table_moderators = 'tblmembership_moderators';
     protected $table_event_transactions = 'tblmembership_event_transactions';
@@ -44,13 +42,44 @@ class Membership_model extends CI_Model
             $this->table_committees,
             $this->table_board_members,
         ];
-        
+
         foreach ($tables as $table) {
             if (!$this->db->table_exists($table)) {
                 return false;
             }
         }
+
+        // Add join_date column if it doesn't exist (replaces graduation_year)
+        if ($this->db->table_exists($this->table)) {
+            $q = $this->db->query(
+                'SELECT COUNT(*) AS cnt FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME   = \'' . $this->db->escape_str($this->table) . '\'
+                   AND COLUMN_NAME  = \'join_date\''
+            )->row_array();
+            if (empty($q['cnt'])) {
+                $this->db->query('ALTER TABLE `' . $this->table . '` ADD COLUMN `join_date` DATE DEFAULT NULL');
+            }
+        }
+
         return true;
+    }
+
+    /**
+     * Return all contacts that are NOT already members.
+     */
+    public function get_available_contacts()
+    {
+        $this->db->select('c.id, c.firstname, c.lastname, c.email');
+        $this->db->from(db_prefix() . 'contacts c');
+        $this->db->join(
+            $this->table . ' m',
+            'm.contact_id = c.id',
+            'left'
+        );
+        $this->db->where('m.id IS NULL');
+        $this->db->order_by('c.firstname', 'ASC');
+        return $this->db->get()->result_array();
     }
 
     public function get_member_by_contact_id($contact_id)
@@ -81,8 +110,12 @@ class Membership_model extends CI_Model
 
     public function get_member($id)
     {
-        return $this->db->where('id', $id)
-            ->get($this->table)
+        return $this->db
+            ->select('m.*, c.firstname, c.lastname, c.email')
+            ->from($this->table . ' m')
+            ->join(db_prefix() . 'contacts c', 'c.id = m.contact_id', 'left')
+            ->where('m.id', $id)
+            ->get()
             ->row_array();
     }
 
@@ -625,70 +658,6 @@ class Membership_model extends CI_Model
         $this->db->or_like('tm.profession', $search);
         $this->db->group_end();
         return $this->db->get()->result_array();
-    }
-
-    public function get_notice_categories($id = null)
-    {
-        if ($id) {
-            return $this->db->where('id', $id)->get($this->table_notice_categories)->row_array();
-        }
-        return $this->db->order_by('name', 'ASC')->get($this->table_notice_categories)->result_array();
-    }
-
-    public function create_notice_category($data)
-    {
-        $data['created_at'] = date('Y-m-d H:i:s');
-        $this->db->insert($this->table_notice_categories, $data);
-        return $this->db->insert_id();
-    }
-
-    public function update_notice_category($id, $data)
-    {
-        $this->db->where('id', $id);
-        return $this->db->update($this->table_notice_categories, $data);
-    }
-
-    public function delete_notice_category($id)
-    {
-        $this->db->where('id', $id);
-        return $this->db->delete($this->table_notice_categories);
-    }
-
-    public function get_notices($status = null, $category_id = null)
-    {
-        if ($status) {
-            $this->db->where('status', $status);
-        }
-        if ($category_id) {
-            $this->db->where('category_id', $category_id);
-        }
-        return $this->db->order_by('created_at', 'DESC')->get($this->table_notices)->result_array();
-    }
-
-    public function get_notice($id)
-    {
-        return $this->db->where('id', $id)->get($this->table_notices)->row_array();
-    }
-
-    public function create_notice($data)
-    {
-        $data['created_at'] = date('Y-m-d H:i:s');
-        $data['created_by'] = get_staff_user_id();
-        $this->db->insert($this->table_notices, $data);
-        return $this->db->insert_id();
-    }
-
-    public function update_notice($id, $data)
-    {
-        $data['updated_at'] = date('Y-m-d H:i:s');
-        $this->db->where('id', $id);
-        return $this->db->update($this->table_notices, $data);
-    }
-
-    public function delete_notice($id)
-    {
-        $this->db->where('id', $id);
-        return $this->db->delete($this->table_notices);
     }
 
     public function get_moderator_roles($id = null)
@@ -1259,5 +1228,11 @@ class Membership_model extends CI_Model
         $data['updated_at'] = date('Y-m-d H:i:s');
         $this->db->where('id', $id);
         return $this->db->update($this->table_positions, $data);
+    }
+
+    public function delete_position($id)
+    {
+        $this->db->where('id', $id);
+        return $this->db->delete($this->table_positions);
     }
 }

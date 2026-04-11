@@ -50,13 +50,38 @@ $(document).ready(function() {
             $('#vote_list_container').html('<p class="text-muted"><?= _l('membership_select_election') ?></p>');
         }
     });
-}
+});
 
 // Function to load vote list via AJAX
 function loadVoteList(electionId) {
+    $('#vote_list_container').html('<p class="text-muted"><i class="fa fa-spinner fa-spin"></i> <?= _l('membership_loading') ?></p>');
     $.get("<?= admin_url('membership/ajax_get_votes') ?>/" + electionId, function(response) {
         if (response.success) {
-            $('#vote_list_container').html(response.votes_html);
+            var votes = response.votes;
+            if (!votes || votes.length === 0) {
+                $('#vote_list_container').html('<div class="text-center"><p><?= _l('membership_no_votes') ?></p></div>');
+                return;
+            }
+            var html = '<table class="table dt-table"><thead><tr>';
+            html += '<th><?= _l('membership_voter') ?></th>';
+            html += '<th><?= _l('membership_candidate') ?></th>';
+            html += '<th><?= _l('membership_election') ?></th>';
+            html += '<th><?= _l('membership_voted_at') ?></th>';
+            html += '</tr></thead><tbody>';
+            $.each(votes, function(i, vote) {
+                var voter = (vote.voter_firstname ? vote.voter_firstname + ' ' + vote.voter_lastname : '-');
+                var candidate = (vote.candidate_firstname ? vote.candidate_firstname + ' ' + vote.candidate_lastname : '-');
+                var election = vote.election_title ? vote.election_title : '-';
+                var votedAt = vote.voted_at ? vote.voted_at : '-';
+                html += '<tr>';
+                html += '<td>' + $('<span>').text(voter).html() + '</td>';
+                html += '<td>' + $('<span>').text(candidate).html() + '</td>';
+                html += '<td>' + $('<span>').text(election).html() + '</td>';
+                html += '<td>' + $('<span>').text(votedAt).html() + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            $('#vote_list_container').html(html);
         } else {
             $('#vote_list_container').html('<p class="text-danger">' + response.message + '</p>');
         }

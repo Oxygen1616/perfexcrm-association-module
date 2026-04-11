@@ -54,9 +54,32 @@ $(document).ready(function() {
 
 // Function to load election results via AJAX
 function loadElectionResults(electionId) {
+    $('#election_results_container').html('<p class="text-muted"><i class="fa fa-spinner fa-spin"></i> <?= _l('membership_loading') ?></p>');
     $.get("<?= admin_url('membership/ajax_get_election_results') ?>/" + electionId, function(response) {
         if (response.success) {
-            $('#election_results_container').html(response.results_html);
+            var results = response.results;
+            var totalVotes = response.total_votes || 0;
+            if (!results || results.length === 0) {
+                $('#election_results_container').html('<div class="text-center mtop15"><p><?= _l('membership_no_results') ?></p></div>');
+                return;
+            }
+            var html = '<div class="row mtop15"><div class="col-md-12"><h5><?= _l('membership_total_votes') ?>: ' + totalVotes + '</h5></div></div>';
+            html += '<table class="table dt-table mtop15"><thead><tr>';
+            html += '<th><?= _l('membership_candidate') ?></th>';
+            html += '<th><?= _l('membership_votes') ?></th>';
+            html += '<th><?= _l('membership_percentage') ?></th>';
+            html += '</tr></thead><tbody>';
+            $.each(results, function(i, result) {
+                var percentage = totalVotes > 0 ? Math.round((result.vote_count / totalVotes) * 10000) / 100 : 0;
+                var name = $('<span>').text(result.firstname + ' ' + result.lastname).html();
+                html += '<tr>';
+                html += '<td>' + name + '</td>';
+                html += '<td>' + result.vote_count + '</td>';
+                html += '<td><div class="progress"><div class="progress-bar" role="progressbar" style="width:' + percentage + '%">' + percentage + '%</div></div></td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            $('#election_results_container').html(html);
         } else {
             $('#election_results_container').html('<p class="text-danger">' + response.message + '</p>');
         }

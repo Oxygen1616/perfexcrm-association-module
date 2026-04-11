@@ -49,8 +49,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label><?php echo _l('membership_graduation_year'); ?></label>
-                                    <input type="number" name="graduation_year" class="form-control">
+                                    <label><?php echo _l('membership_join_date'); ?></label>
+                                    <input type="date" name="join_date" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">

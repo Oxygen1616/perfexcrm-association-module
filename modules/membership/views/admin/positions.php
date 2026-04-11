@@ -1,47 +1,65 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-
-<div class="panel_s">
-    <div class="panel-body">
-        <?php if (staff_can('create', 'membership')): ?>
-        <a href="#" onclick="init_position_form(); return false;" class="btn btn-primary pull-left mbot15">
-            <i class="fa-regular fa-plus"></i> <?= _l('membership_new_position'); ?>
-        </a>
-        <div class="clearfix"></div>
-        <?php endif; ?>
-
-        <?php if (count($positions) > 0): ?>
-        <table class="table dt-table">
-            <thead>
-                <tr>
-                    <th><?= _l('membership_position_name'); ?></th>
-                    <th><?= _l('membership_position_description'); ?></th>
-                    <th class="text-right"><?= _l('membership_options'); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($positions as $position): ?>
-                <tr>
-                    <td><?= e($position['name']); ?></td>
-                    <td><?= e($position['description']); ?></td>
-                    <td class="text-right">
-                        <?php if (staff_can('edit', 'membership')): ?>
-                        <a href="#" onclick="position_form(<?= $position['id']; ?>); return false;" class="btn btn-default btn-icon">
-                            <i class="fa-regular fa-pen-to-square"></i>
+<?php init_head(); ?>
+<div id="wrapper">
+    <div class="content">
+        <div class="row">
+            <div class="col-md-12">
+                <ul class="list-inline">
+                    <li class="col-md-6">
+                        <h4><?= _l('membership_positions'); ?></h4>
+                    </li>
+                    <li class="col-md-6 text-right">
+                        <?php if (staff_can('create', 'membership')): ?>
+                        <a href="#" onclick="init_position_form(); return false;" class="btn btn-primary">
+                            <i class="fa-regular fa-plus"></i> <?= _l('membership_new_position'); ?>
                         </a>
                         <?php endif; ?>
-                        <?php if (staff_can('delete', 'membership')): ?>
-                        <a href="#" onclick="delete_position(<?= $position['id']; ?>); return false;" class="btn btn-danger btn-icon">
-                            <i class="fa-regular fa-trash-can"></i>
-                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="row mtop15">
+            <div class="col-md-12">
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <?php if (count($positions) > 0): ?>
+                        <table class="table dt-table">
+                            <thead>
+                                <tr>
+                                    <th><?= _l('membership_position_name'); ?></th>
+                                    <th><?= _l('membership_position_description'); ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($positions as $position): ?>
+                                <tr>
+                                    <td>
+                                        <a href="#" onclick="position_form(<?= $position['id']; ?>); return false;">
+                                            <?= e($position['name']); ?>
+                                        </a>
+                                        <div class="row-options">
+                                            <a href="#" onclick="position_form(<?= $position['id']; ?>); return false;">
+                                                <?= _l('membership_edit'); ?>
+                                            </a>
+                                            |
+                                            <a href="<?= admin_url('membership/delete_position/' . $position['id']); ?>"
+                                               onclick="return confirm('<?= _l('membership_confirm_position_delete'); ?>')">
+                                                <?= _l('membership_delete'); ?>
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <td><?= e($position['description']); ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                        <?php else: ?>
+                        <div class="alert alert-info"><?= _l('membership_no_positions_found'); ?></div>
                         <?php endif; ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-        <?php else: ?>
-        <div class="alert alert-info"><?= _l('membership_no_positions_found'); ?></div>
-        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -89,8 +107,7 @@
         $('#position-id').val(id);
         $('#position-modal-title').text('<?= _l('membership_edit_position'); ?>');
 
-        // Load position data via AJAX
-        $.get(admin_url('membership/get_position/' + id), function(response) {
+        $.get('<?= admin_url('membership/ajax_get_position') ?>/' + id, function(response) {
             if (response.success) {
                 $('#position-name').val(response.position.name);
                 $('#position-description').val(response.position.description || '');
@@ -100,17 +117,5 @@
             }
         });
     }
-
-    function delete_position(id) {
-        if (confirm('<?= _l('membership_confirm_position_delete'); ?>')) {
-            $.get(admin_url('membership/delete_position/' + id), function(response) {
-                if (response.success) {
-                    alert_float('success', response.message);
-                    location.reload();
-                } else {
-                    alert_float('danger', response.message);
-                }
-            });
-        }
-    }
 </script>
+<?php init_tail(); ?>

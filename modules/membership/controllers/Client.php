@@ -313,9 +313,13 @@ class Client extends ClientsController
 
         $member = $this->membership_model->get_member_by_contact_id($this->contact_user_id);
 
-        $data['elections'] = $this->membership_model->get_elections();
-        $data['symbols'] = $this->membership_model->get_election_symbols();
-        $data['my_nominations'] = $this->membership_model->get_nominations(null, null, $member['id']);
+        $data['elections']          = $this->membership_model->get_elections();
+        $data['symbols']            = $this->membership_model->get_election_symbols();
+        $data['my_nominations']     = $this->membership_model->get_nominations(null, null, $member['id']);
+        $data['members']            = $this->membership_model->get_all_members('active');
+        $data['nomination_fee']     = get_option('membership_nomination_fee') ?: '0.00';
+        $data['nomination_currency']= get_option('membership_nomination_currency') ?: 'USD';
+        $data['nomination_rules']   = get_option('membership_nomination_rules') ?: '';
 
         $this->data($data)
             ->title(_l('membership_nominations'))
@@ -356,7 +360,6 @@ class Client extends ClientsController
                 'member_id'    => $nominated_member_id,
                 'manifesto'    => $this->input->post('manifesto'),
                 'photo'        => $photo_name,
-                'declaration'  => $this->input->post('declaration') ? 1 : 0,
                 'status'       => 'pending',
             ];
 
@@ -398,7 +401,7 @@ class Client extends ClientsController
 
             if ($this->membership_model->has_voted($election_id, $this->contact_user_id)) {
                 set_alert('warning', _l('membership_already_voted'));
-                redirect(site_url('membership/cast_vote'));
+                redirect(site_url('membership/client/cast_vote'));
             }
 
             $result = $this->membership_model->cast_vote($election_id, $candidate_id, $this->contact_user_id);
@@ -409,7 +412,7 @@ class Client extends ClientsController
                 set_alert('danger', _l('membership_vote_failed'));
             }
 
-            redirect(site_url('membership/cast_vote'));
+            redirect(site_url('membership/client/cast_vote'));
         }
 
         $data['elections'] = $this->membership_model->get_elections('active');

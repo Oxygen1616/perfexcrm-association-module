@@ -27,35 +27,38 @@
                                         <th><?php echo _l('membership_election_title'); ?></th>
                                         <th><?php echo _l('membership_period'); ?></th>
                                         <th><?php echo _l('membership_status'); ?></th>
-                                        <th><?php echo _l('membership_actions'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($elections as $election): ?>
-                                        <?php 
-                                        $election_votes = $this->membership_model->get_total_votes($election['id']);
-                                        ?>
                                         <tr>
-                                            <td><?php echo $election['title']; ?></td>
                                             <td>
-                                                <?php echo date('M d, Y', strtotime($election['start_date'])); ?> - 
+                                                <a href="#" onclick="editElection(<?php echo $election['id']; ?>, '<?php echo addslashes($election['title']); ?>', '<?php echo addslashes($election['description']); ?>', '<?php echo date('Y-m-d\TH:i', strtotime($election['start_date'])); ?>', '<?php echo date('Y-m-d\TH:i', strtotime($election['end_date'])); ?>', '<?php echo $election['status']; ?>')">
+                                                    <?php echo e($election['title']); ?>
+                                                </a>
+                                                <div class="row-options">
+                                                    <a href="#" onclick="editElection(<?php echo $election['id']; ?>, '<?php echo addslashes($election['title']); ?>', '<?php echo addslashes($election['description']); ?>', '<?php echo date('Y-m-d\TH:i', strtotime($election['start_date'])); ?>', '<?php echo date('Y-m-d\TH:i', strtotime($election['end_date'])); ?>', '<?php echo $election['status']; ?>')">
+                                                        <?php echo _l('membership_edit'); ?>
+                                                    </a>
+                                                    |
+                                                    <a href="<?php echo admin_url('membership/election_results/' . $election['id']); ?>">
+                                                        <?php echo _l('membership_results'); ?>
+                                                    </a>
+                                                    |
+                                                    <a href="<?php echo admin_url('membership/delete_election/' . $election['id']); ?>"
+                                                       onclick="return confirm('<?php echo _l('membership_delete_confirm'); ?>')">
+                                                        <?php echo _l('membership_delete'); ?>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <?php echo date('M d, Y', strtotime($election['start_date'])); ?> -
                                                 <?php echo date('M d, Y', strtotime($election['end_date'])); ?>
                                             </td>
                                             <td>
                                                 <span class="label label-<?php echo $election['status'] == 'active' ? 'success' : ($election['status'] == 'draft' ? 'warning' : 'default'); ?>">
                                                     <?php echo ucfirst($election['status']); ?>
                                                 </span>
-                                            </td>
-                                            <td>
-                                                <button type="button" class="btn btn-default btn-xs" onclick="editElection(<?php echo $election['id']; ?>, '<?php echo htmlspecialchars($election['title']); ?>', '<?php echo htmlspecialchars($election['description']); ?>', '<?php echo date('Y-m-d\TH:i', strtotime($election['start_date'])); ?>', '<?php echo date('Y-m-d\TH:i', strtotime($election['end_date'])); ?>', '<?php echo $election['status']; ?>')">
-                                                    <i class="fa fa-pencil"></i> <?php echo _l('membership_edit'); ?>
-                                                </button>
-                                                <a href="<?php echo admin_url('membership/election_results/' . $election['id']); ?>" class="btn btn-info btn-xs">
-                                                    <i class="fa fa-bar-chart"></i> <?php echo _l('membership_results'); ?>
-                                                </a>
-                                                <a href="<?php echo admin_url('membership/delete_election/' . $election['id']); ?>" class="btn btn-danger btn-xs" onclick="return confirm('<?php echo _l('membership_delete_confirm'); ?>')">
-                                                    <i class="fa fa-trash"></i> <?php echo _l('membership_delete'); ?>
-                                                </a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

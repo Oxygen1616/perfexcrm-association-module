@@ -454,7 +454,11 @@ class Membership extends AdminController
             redirect(admin_url('membership/settings'));
         }
 
-        $data['title'] = _l('membership_settings');
+        $data['title']        = _l('membership_settings');
+        $data['positions']    = $this->membership_model->get_positions();
+        $data['symbols']      = $this->membership_model->get_election_symbols();
+        $data['designations'] = $this->membership_model->get_committee_designations();
+        $data['categories']   = $this->membership_model->get_committee_categories();
         $this->load->view('admin/settings', $data);
     }
 
@@ -1019,9 +1023,10 @@ class Membership extends AdminController
             access_denied();
         }
 
-        $data['title'] = _l('membership_vote_list');
-        $data['votes'] = $this->membership_model->get_vote_list($election_id ?: null);
-        $data['elections'] = $this->membership_model->get_elections();
+        $data['title']            = _l('membership_vote_list');
+        $data['votes']            = $this->membership_model->get_vote_list($election_id ?: null);
+        $data['elections']        = $this->membership_model->get_elections();
+        $data['selected_election']= $election_id;
         $this->load->view('admin/vote_list', $data);
     }
 

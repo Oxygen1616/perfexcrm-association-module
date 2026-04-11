@@ -12,9 +12,9 @@
                 <div class="panel_s">
                     <div class="panel-body">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-5">
                                 <label><?php echo _l('membership_select_election'); ?></label>
-                                <select class="form-control" id="election_filter">
+                                <select class="form-control" id="election_filter" onchange="filterByElection(this.value)">
                                     <option value=""><?php echo _l('membership_select_election'); ?></option>
                                     <?php foreach ($elections as $e): ?>
                                         <option value="<?php echo $e['id']; ?>" <?php echo isset($selected_election) && $selected_election == $e['id'] ? 'selected' : ''; ?>>
@@ -24,9 +24,41 @@
                                 </select>
                             </div>
                         </div>
-                        <div id="vote_list_container">
-                            <?php $this->load->view('admin/partials/_vote_list_table', ['votes' => $votes ?? []]); ?>
-                        </div>
+
+                        <?php if (isset($selected_election) && $selected_election): ?>
+                            <?php if (isset($votes) && count($votes) > 0): ?>
+                                <div class="mtop15">
+                                    <table class="table table-striped table-bordered dt-table" id="votes_table">
+                                        <thead>
+                                            <tr>
+                                                <th><?php echo _l('membership_voter'); ?></th>
+                                                <th><?php echo _l('membership_candidate'); ?></th>
+                                                <th><?php echo _l('membership_election'); ?></th>
+                                                <th><?php echo _l('membership_voted_at'); ?></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($votes as $vote): ?>
+                                            <tr>
+                                                <td><?php echo e(($vote['voter_firstname'] ?? '') . ' ' . ($vote['voter_lastname'] ?? '')); ?></td>
+                                                <td><?php echo e(($vote['candidate_firstname'] ?? '') . ' ' . ($vote['candidate_lastname'] ?? '')); ?></td>
+                                                <td><?php echo e($vote['election_title'] ?? '-'); ?></td>
+                                                <td><?php echo e($vote['voted_at'] ?? '-'); ?></td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php else: ?>
+                                <div class="mtop15">
+                                    <p class="text-muted"><?php echo _l('membership_no_votes'); ?></p>
+                                </div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div class="mtop15">
+                                <p class="text-muted"><?php echo _l('membership_select_election'); ?></p>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -35,59 +67,13 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    // Load initial vote list if an election is selected
-    if ($('#election_filter').val()) {
-        loadVoteList($('#election_filter').val());
+function filterByElection(id) {
+    if (id) {
+        window.location.href = '<?php echo admin_url('membership/vote_list'); ?>/' + id;
+    } else {
+        window.location.href = '<?php echo admin_url('membership/vote_list'); ?>';
     }
-
-    // Handle election dropdown changes
-    $('#election_filter').on('change', function() {
-        var electionId = $(this).val();
-        if (electionId) {
-            loadVoteList(electionId);
-        } else {
-            $('#vote_list_container').html('<p class="text-muted"><?= _l('membership_select_election') ?></p>');
-        }
-    });
-});
-
-// Function to load vote list via AJAX
-function loadVoteList(electionId) {
-    $('#vote_list_container').html('<p class="text-muted"><i class="fa fa-spinner fa-spin"></i> <?= _l('membership_loading') ?></p>');
-    $.get("<?= admin_url('membership/ajax_get_votes') ?>/" + electionId, function(response) {
-        if (response.success) {
-            var votes = response.votes;
-            if (!votes || votes.length === 0) {
-                $('#vote_list_container').html('<div class="text-center"><p><?= _l('membership_no_votes') ?></p></div>');
-                return;
-            }
-            var html = '<table class="table dt-table"><thead><tr>';
-            html += '<th><?= _l('membership_voter') ?></th>';
-            html += '<th><?= _l('membership_candidate') ?></th>';
-            html += '<th><?= _l('membership_election') ?></th>';
-            html += '<th><?= _l('membership_voted_at') ?></th>';
-            html += '</tr></thead><tbody>';
-            $.each(votes, function(i, vote) {
-                var voter = (vote.voter_firstname ? vote.voter_firstname + ' ' + vote.voter_lastname : '-');
-                var candidate = (vote.candidate_firstname ? vote.candidate_firstname + ' ' + vote.candidate_lastname : '-');
-                var election = vote.election_title ? vote.election_title : '-';
-                var votedAt = vote.voted_at ? vote.voted_at : '-';
-                html += '<tr>';
-                html += '<td>' + $('<span>').text(voter).html() + '</td>';
-                html += '<td>' + $('<span>').text(candidate).html() + '</td>';
-                html += '<td>' + $('<span>').text(election).html() + '</td>';
-                html += '<td>' + $('<span>').text(votedAt).html() + '</td>';
-                html += '</tr>';
-            });
-            html += '</tbody></table>';
-            $('#vote_list_container').html(html);
-        } else {
-            $('#vote_list_container').html('<p class="text-danger">' + response.message + '</p>');
-        }
-    }).fail(function() {
-        $('#vote_list_container').html('<p class="text-danger"><?= _l('membership_error_loading_votes') ?></p>');
-    });
 }
+
 </script>
 <?php init_tail(); ?>

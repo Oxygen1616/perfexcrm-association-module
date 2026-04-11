@@ -191,197 +191,91 @@ function membership_module_init_menu_items()
             'slug'     => 'membership_dashboard',
             'name'     => 'Dashboard',
             'href'     => admin_url('membership'),
-            'position' => 0,
+            'position' => 1,
         ]);
 
         $CI->app_menu->add_sidebar_children_item('membership', [
             'slug'     => 'membership_members',
             'name'     => 'All Members',
             'href'     => admin_url('membership/members'),
-            'position' => 1,
+            'position' => 2,
         ]);
 
         $CI->app_menu->add_sidebar_children_item('membership', [
             'slug'     => 'membership_events',
             'name'     => 'Events',
             'href'     => admin_url('membership/events'),
-            'position' => 2,
+            'position' => 3,
         ]);
 
         $CI->app_menu->add_sidebar_children_item('membership', [
             'slug'     => 'membership_elections',
             'name'     => 'Elections',
-            'href'     => admin_url('membership/elections'),
+            'href'     => admin_url('membership/vote_elections'),
             'position' => 4,
         ]);
 
         $CI->app_menu->add_sidebar_children_item('membership', [
-            'slug'     => 'membership_positions',
-            'name'     => 'Positions',
-            'href'     => admin_url('membership/positions'),
+            'slug'     => 'membership_nominations',
+            'name'     => _l('membership_nominations'),
+            'href'     => admin_url('membership/nominations'),
             'position' => 5,
         ]);
 
-$CI->app_menu->add_sidebar_children_item('membership', [
+        $CI->app_menu->add_sidebar_children_item('membership', [
+            'slug'     => 'membership_final_candidates',
+            'name'     => _l('membership_final_candidates'),
+            'href'     => admin_url('membership/final_candidates'),
+            'position' => 6,
+        ]);
+
+        $CI->app_menu->add_sidebar_children_item('membership', [
+            'slug'     => 'membership_vote_list',
+            'name'     => _l('membership_vote_list'),
+            'href'     => admin_url('membership/vote_list'),
+            'position' => 7,
+        ]);
+
+        $CI->app_menu->add_sidebar_children_item('membership', [
+            'slug'     => 'membership_election_results',
+            'name'     => _l('membership_election_results'),
+            'href'     => admin_url('membership/election_results'),
+            'position' => 8,
+        ]);
+
+        $CI->app_menu->add_sidebar_children_item('membership', [
+            'slug'     => 'membership_committees',
+            'name'     => _l('membership_committees'),
+            'href'     => admin_url('membership/committees'),
+            'position' => 9,
+        ]);
+
+        $CI->app_menu->add_sidebar_children_item('membership', [
+            'slug'     => 'membership_committee_members',
+            'name'     => _l('membership_committee_members'),
+            'href'     => admin_url('membership/committee_members'),
+            'position' => 10,
+        ]);
+
+        $CI->app_menu->add_sidebar_children_item('membership', [
+            'slug'     => 'membership_board_members',
+            'name'     => _l('membership_board_members'),
+            'href'     => admin_url('membership/board_members'),
+            'position' => 11,
+        ]);
+
+        $CI->app_menu->add_sidebar_children_item('membership', [
             'slug'     => 'membership_moderator',
             'name'     => 'Moderator',
             'href'     => admin_url('membership/moderators'),
-            'position' => 8,
+            'position' => 12,
         ]);
 
         $CI->app_menu->add_sidebar_children_item('membership', [
             'slug'     => 'membership_settings',
             'name'     => 'Settings',
             'href'     => admin_url('membership/settings'),
-            'position' => 9,
+            'position' => 13,
         ]);
     }
-}
-
-hooks()->add_action('admin_init', 'manage_committee_menu');
-
-function manage_committee_menu()
-{
-    if (!is_admin()) {
-        return;
-    }
-
-    $CI = &get_instance();
-
-    $CI->app_menu->add_sidebar_menu_item('manage_committee', [
-        'name'     => _l('membership_manage_committee'),
-        'href'     => admin_url('membership/committee_categories'),
-        'position' => 10,
-        'icon'     => 'fa-solid fa-users-rectangle',
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_committee', [
-        'slug'     => 'committee_categories',
-        'name'     => _l('membership_committee_categories'),
-        'href'     => admin_url('membership/committee_categories'),
-        'position' => 1,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_committee', [
-        'slug'     => 'committee_designations',
-        'name'     => _l('membership_committee_designations'),
-        'href'     => admin_url('membership/committee_designations'),
-        'position' => 2,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_committee', [
-        'slug'     => 'committees',
-        'name'     => _l('membership_committees'),
-        'href'     => admin_url('membership/committees'),
-        'position' => 3,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_committee', [
-        'slug'     => 'committee_members',
-        'name'     => _l('membership_committee_members'),
-        'href'     => admin_url('membership/committee_members'),
-        'position' => 4,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_committee', [
-        'slug'     => 'committee_election',
-        'name'     => _l('membership_committee_election'),
-        'href'     => admin_url('membership/vote_elections'),
-        'position' => 5,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_committee', [
-        'slug'     => 'election_symbols',
-        'name'     => _l('membership_election_symbols'),
-        'href'     => admin_url('membership/election_symbols'),
-        'position' => 6,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_committee', [
-        'slug'     => 'nominations',
-        'name'     => _l('membership_nominations'),
-        'href'     => admin_url('membership/nominations'),
-        'position' => 7,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_committee', [
-        'slug'     => 'nomination_transactions',
-        'name'     => _l('membership_nomination_transactions'),
-        'href'     => admin_url('membership/nomination_transactions'),
-        'position' => 8,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_committee', [
-        'slug'     => 'board_members',
-        'name'     => _l('membership_board_members'),
-        'href'     => admin_url('membership/board_members'),
-        'position' => 9,
-    ]);
-}
-
-hooks()->add_action('admin_init', 'manage_vote_menu');
-
-function manage_vote_menu()
-{
-    if (!is_admin()) {
-        return;
-    }
-
-    $CI = &get_instance();
-
-    $CI->app_menu->add_sidebar_menu_item('manage_vote', [
-        'name'     => _l('membership_manage_vote'),
-        'href'     => admin_url('membership/vote_elections'),
-        'position' => 11,
-        'icon'     => 'fa-solid fa-check-to-slot',
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_vote', [
-        'slug'     => 'vote_elections',
-        'name'     => _l('membership_elections'),
-        'href'     => admin_url('membership/vote_elections'),
-        'position' => 1,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_vote', [
-        'slug'     => 'vote_nominations',
-        'name'     => _l('membership_nominations'),
-        'href'     => admin_url('membership/vote_nominations'),
-        'position' => 2,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_vote', [
-        'slug'     => 'pending_candidates',
-        'name'     => _l('membership_pending_candidates'),
-        'href'     => admin_url('membership/pending_candidates'),
-        'position' => 3,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_vote', [
-        'slug'     => 'final_candidates',
-        'name'     => _l('membership_final_candidates'),
-        'href'     => admin_url('membership/final_candidates'),
-        'position' => 4,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_vote', [
-        'slug'     => 'candidate_comments',
-        'name'     => _l('membership_candidate_comments'),
-        'href'     => admin_url('membership/candidate_comments'),
-        'position' => 5,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_vote', [
-        'slug'     => 'vote_list',
-        'name'     => _l('membership_vote_list'),
-        'href'     => admin_url('membership/vote_list'),
-        'position' => 6,
-    ]);
-
-    $CI->app_menu->add_sidebar_children_item('manage_vote', [
-        'slug'     => 'election_results',
-        'name'     => _l('membership_election_results'),
-        'href'     => admin_url('membership/election_results'),
-        'position' => 7,
-    ]);
 }

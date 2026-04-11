@@ -118,18 +118,27 @@
                 <input type="hidden" name="member_id" id="memberId">
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <label><?php echo _l('membership_select_contact'); ?> *</label>
-                            <select name="contact_id" id="member_contact_id" class="form-control selectpicker" data-live-search="true" required>
-                                <option value=""><?php echo _l('membership_select_contact'); ?></option>
-                                <?php if (isset($contacts) && count($contacts) > 0): ?>
-                                    <?php foreach ($contacts as $contact): ?>
-                                        <option value="<?php echo $contact['id']; ?>">
-                                            <?php echo $contact['firstname'] . ' ' . $contact['lastname'] . ' (' . $contact['email'] . ')'; ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </select>
+                        <div id="contact_select_group">
+                            <div class="form-group">
+                                <label><?php echo _l('membership_select_contact'); ?> *</label>
+                                <select name="contact_id" id="member_contact_id" class="form-control selectpicker" data-live-search="true" required>
+                                    <option value=""><?php echo _l('membership_select_contact'); ?></option>
+                                    <?php if (isset($contacts) && count($contacts) > 0): ?>
+                                        <?php foreach ($contacts as $contact): ?>
+                                            <option value="<?php echo $contact['id']; ?>">
+                                                <?php echo $contact['firstname'] . ' ' . $contact['lastname'] . ' (' . $contact['email'] . ')'; ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="contact_display_group" style="display:none;">
+                            <div class="form-group">
+                                <label><?php echo _l('membership_select_contact'); ?></label>
+                                <input type="hidden" name="contact_id" id="member_contact_id_hidden">
+                                <p id="member_contact_name" class="form-control-static"></p>
+                            </div>
                         </div>
                     </div>
                 </div>

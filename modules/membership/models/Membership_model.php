@@ -507,12 +507,15 @@ class Membership_model extends CI_Model
 
     public function get_election_results($election_id)
     {
-        $this->db->select('mc.id as candidate_id, mc.contact_id, tc.firstname, tc.lastname, COUNT(mv.id) as vote_count');
-        $this->db->from($this->table_candidates . ' mc');
-        $this->db->join(db_prefix() . 'contacts tc', 'tc.id = mc.contact_id', 'left');
-        $this->db->join($this->table_votes . ' mv', 'mv.candidate_id = mc.id', 'left');
-        $this->db->where('mc.election_id', $election_id);
-        $this->db->group_by('mc.id');
+        // Votes store nomination IDs as candidate_id, so join nominations
+        $this->db->select('mn.id as candidate_id, tm.contact_id, tc.firstname, tc.lastname, mn.position, COUNT(mv.id) as vote_count');
+        $this->db->from($this->table_nominations . ' mn');
+        $this->db->join($this->table . ' tm', 'tm.id = mn.member_id', 'left');
+        $this->db->join(db_prefix() . 'contacts tc', 'tc.id = tm.contact_id', 'left');
+        $this->db->join($this->table_votes . ' mv', 'mv.candidate_id = mn.id', 'left');
+        $this->db->where('mn.election_id', $election_id);
+        $this->db->where('mn.status', 'approved');
+        $this->db->group_by('mn.id');
         $this->db->order_by('vote_count', 'DESC');
         return $this->db->get()->result_array();
     }

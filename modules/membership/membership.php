@@ -93,11 +93,18 @@ function membership_client_menu()
                 <span class="menu-text">' . _l('membership_nominations') . '</span>
             </a>
         </li>';
-        
+
         echo '<li class="customers-nav-item-custom">
             <a href="' . site_url('membership/client/cast_vote') . '">
                 <i class="fa fa-check-square-o menu-icon"></i>
                 <span class="menu-text">' . _l('membership_cast_vote') . '</span>
+            </a>
+        </li>';
+
+        echo '<li class="customers-nav-item-custom">
+            <a href="' . site_url('membership/client/vote_history') . '">
+                <i class="fa fa-history menu-icon"></i>
+                <span class="menu-text">' . _l('membership_vote_history') . '</span>
             </a>
         </li>';
     }

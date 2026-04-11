@@ -28,13 +28,23 @@
                                         <th><?php echo _l('membership_notice_category'); ?></th>
                                         <th><?php echo _l('membership_notice_status'); ?></th>
                                         <th><?php echo _l('membership_notice_date'); ?></th>
-                                        <th><?php echo _l('membership_actions'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($notices as $notice): ?>
                                         <tr>
-                                            <td><?php echo $notice['title']; ?></td>
+                                            <td>
+                                                <?php echo $notice['title']; ?>
+                                                <div class="row-options">
+                                                    <a href="<?php echo admin_url('membership/notices/' . $notice['id']); ?>">
+                                                        <?php echo _l('membership_edit'); ?>
+                                                    </a>
+                                                    |
+                                                    <a href="<?php echo admin_url('membership/delete_notice/' . $notice['id']); ?>" onclick="return confirm('<?php echo _l('membership_delete_confirm'); ?>')">
+                                                        <?php echo _l('membership_delete'); ?>
+                                                    </a>
+                                                </div>
+                                            </td>
                                             <td>
                                                 <?php 
                                                 $category = null;
@@ -53,14 +63,6 @@
                                                 </span>
                                             </td>
                                             <td><?php echo date('M d, Y', strtotime($notice['created_at'])); ?></td>
-                                            <td>
-                                                <a href="<?php echo admin_url('membership/notices/' . $notice['id']); ?>" class="btn btn-default btn-xs">
-                                                    <i class="fa fa-pencil"></i> <?php echo _l('membership_edit'); ?>
-                                                </a>
-                                                <a href="<?php echo admin_url('membership/delete_notice/' . $notice['id']); ?>" class="btn btn-danger btn-xs" onclick="return confirm('<?php echo _l('membership_delete_confirm'); ?>')">
-                                                    <i class="fa fa-trash"></i> <?php echo _l('membership_delete'); ?>
-                                                </a>
-                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>

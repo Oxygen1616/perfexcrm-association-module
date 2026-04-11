@@ -50,13 +50,35 @@ $(document).ready(function() {
             $('#vote_list_container').html('<p class="text-muted"><?= _l('membership_select_election') ?></p>');
         }
     });
-}
+});
 
 // Function to load vote list via AJAX
 function loadVoteList(electionId) {
+    $('#vote_list_container').html('<div class="text-center"><i class="fa fa-spinner fa-spin"></i></div>');
     $.get("<?= admin_url('membership/ajax_get_votes') ?>/" + electionId, function(response) {
         if (response.success) {
-            $('#vote_list_container').html(response.votes_html);
+            var html = '';
+            if (response.votes && response.votes.length > 0) {
+                html = '<table class="table dt-table"><thead><tr>' +
+                    '<th><?= _l('membership_voter') ?></th>' +
+                    '<th><?= _l('membership_candidate') ?></th>' +
+                    '<th><?= _l('membership_election') ?></th>' +
+                    '<th><?= _l('membership_voted_at') ?></th>' +
+                    '</tr></thead><tbody>';
+                for (var i = 0; i < response.votes.length; i++) {
+                    var vote = response.votes[i];
+                    html += '<tr>' +
+                        '<td>' + (vote.voter_firstname ? vote.voter_firstname + ' ' + vote.voter_lastname : '-') + '</td>' +
+                        '<td>' + (vote.candidate_firstname ? vote.candidate_firstname + ' ' + vote.candidate_lastname : '-') + '</td>' +
+                        '<td>' + (vote.election_title || '-') + '</td>' +
+                        '<td>' + (vote.voted_at ? new Date(vote.voted_at).toLocaleDateString() : '-') + '</td>' +
+                        '</tr>';
+                }
+                html += '</tbody></table>';
+            } else {
+                html = '<div class="text-center"><p><?= _l('membership_no_votes') ?></p></div>';
+            }
+            $('#vote_list_container').html(html);
         } else {
             $('#vote_list_container').html('<p class="text-danger">' + response.message + '</p>');
         }

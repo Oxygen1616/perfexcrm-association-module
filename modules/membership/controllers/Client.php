@@ -398,7 +398,7 @@ class Client extends ClientsController
 
             if ($this->membership_model->has_voted($election_id, $this->contact_user_id)) {
                 set_alert('warning', _l('membership_already_voted'));
-                redirect(site_url('membership/cast_vote'));
+                redirect(site_url('membership/client/cast_vote'));
             }
 
             $result = $this->membership_model->cast_vote($election_id, $candidate_id, $this->contact_user_id);
@@ -409,7 +409,7 @@ class Client extends ClientsController
                 set_alert('danger', _l('membership_vote_failed'));
             }
 
-            redirect(site_url('membership/cast_vote'));
+            redirect(site_url('membership/client/cast_vote'));
         }
 
         $data['elections'] = $this->membership_model->get_elections('active');
@@ -481,18 +481,15 @@ class Client extends ClientsController
 
         $election_id = $this->input->get('election_id');
         if (!$election_id) {
-            echo json_encode(['success' => false, 'message' => 'Election ID required']);
+            // Return empty candidates partial
+            $this->load->view('public/partials/_candidates_list', ['candidates' => [], 'election_id' => $election_id]);
             return;
         }
 
         $candidates = $this->membership_model->get_final_candidates($election_id);
 
-        if ($candidates) {
-            // Load the candidates view partial
-            $this->load->view('public/partials/_candidates_list', ['candidates' => $candidates, 'election_id' => $election_id]);
-        } else {
-            echo json_encode(['success' => false, 'message' => _l('membership_no_candidates')]);
-        }
+        // Always load the candidates view partial (handles empty array)
+        $this->load->view('public/partials/_candidates_list', ['candidates' => $candidates, 'election_id' => $election_id]);
     }
 
     public function get_vote_history()
@@ -510,5 +507,21 @@ class Client extends ClientsController
 
         $voteHistory = $this->membership_model->get_vote_history_by_member($member['id']);
         echo json_encode(['success' => true, 'votes' => $voteHistory]);
+    }
+
+    public function vote_history()
+    {
+        $this->check_member_access();
+
+        $member = $this->membership_model->get_member_by_contact_id($this->contact_user_id);
+        $voteHistory = $this->membership_model->get_vote_history_by_member($member['id']);
+
+        $this->data([
+            'voteHistory' => $voteHistory ?: [],
+            'member' => $member
+        ])
+            ->title(_l('membership_vote_history'))
+            ->view('public/vote_history')
+            ->layout();
     }
 }

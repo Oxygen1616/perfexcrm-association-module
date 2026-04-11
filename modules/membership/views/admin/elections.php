@@ -27,13 +27,23 @@
                                         <th><?php echo _l('membership_election_title'); ?></th>
                                         <th><?php echo _l('membership_election_period'); ?></th>
                                         <th><?php echo _l('membership_election_status'); ?></th>
-                                        <th><?php echo _l('membership_actions'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($elections as $election): ?>
                                         <tr>
-                                            <td><?php echo $election['title']; ?></td>
+                                            <td>
+                                                <?php echo $election['title']; ?>
+                                                <div class="row-options">
+                                                    <a href="<?php echo admin_url('membership/elections/' . $election['id']); ?>">
+                                                        <?php echo _l('membership_edit'); ?>
+                                                    </a>
+                                                    |
+                                                    <a href="<?php echo admin_url('membership/delete_election/' . $election['id']); ?>" onclick="return confirm('<?php echo _l('membership_delete_confirm'); ?>')">
+                                                        <?php echo _l('membership_delete'); ?>
+                                                    </a>
+                                                </div>
+                                            </td>
                                             <td>
                                                 <?php echo _dt($election['start_date']); ?> - <?php echo _dt($election['end_date']); ?>
                                             </td>
@@ -41,17 +51,6 @@
                                                 <span class="label label-<?php echo ($election['status'] == 'active' ? 'success' : ($election['status'] == 'draft' ? 'warning' : 'default')); ?>">
                                                     <?php echo _l('membership_election_status_' . $election['status']); ?>
                                                 </span>
-                                            </td>
-                                            <td>
-                                                <?php if ($election['id']): ?>
-                                                    <a href="<?php echo admin_url('membership/elections/' . $election['id']); ?>" class="btn btn-default btn-xs">
-                                                        <i class="fa fa-pencil-square-o"></i> <?php echo _l('membership_edit'); ?>
-                                                    </a>
-                                                    <a href="<?php echo admin_url('membership/delete_election/' . $election['id']); ?>" class="btn btn-danger btn-xs"
-                                                       onclick="return confirm('<?php echo _l('membership_delete_confirm'); ?>')">
-                                                        <i class="fa fa-trash-o"></i> <?php echo _l('membership_delete'); ?>
-                                                    </a>
-                                                <?php endif; ?>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

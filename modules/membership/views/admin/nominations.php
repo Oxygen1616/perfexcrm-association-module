@@ -126,7 +126,7 @@
                 </div>
                 <div class="form-group">
                     <label><?php echo _l('membership_election'); ?> *</label>
-                    <select name="election_id" id="nomination_election_id" class="form-control" required>
+                    <select name="election_id" id="nomination_election_id" class="form-control" required onchange="loadNominationPositions(this.value)">
                         <option value=""><?php echo _l('membership_select_election'); ?></option>
                         <?php foreach ($elections as $election): ?>
                             <option value="<?php echo $election['id']; ?>"><?php echo e($election['title']); ?></option>
@@ -135,7 +135,13 @@
                 </div>
                 <div class="form-group">
                     <label><?php echo _l('membership_position'); ?> *</label>
-                    <input type="text" name="position" id="nomination_position" class="form-control" required value="">
+                    <select name="position" id="nomination_position" class="form-control" required onchange="handlePositionOther(this.value)">
+                        <option value=""><?php echo _l('membership_select_election_first'); ?></option>
+                    </select>
+                    <input type="text" name="position_custom" id="nomination_position_custom"
+                           class="form-control tw-mt-1" style="display:none;"
+                           placeholder="<?php echo _l('membership_or_type_position'); ?>">
+                    <small class="text-muted"><?php echo _l('membership_position_hint'); ?></small>
                 </div>
                 <div class="form-group">
                     <label><?php echo _l('membership_manifesto'); ?> *</label>
@@ -208,6 +214,65 @@ function viewNomination(id) {
     );
     $('#viewNominationModal').modal('show');
 }
+
+// Load positions when election changes in Add Nomination form
+function loadNominationPositions(electionId) {
+    var $posSelect = $('#nomination_position');
+    var $posCustom = $('#nomination_position_custom');
+
+    $posSelect.html('<option value=""><?php echo _l('membership_loading'); ?></option>');
+    $posCustom.hide().removeAttr('required').removeAttr('name');
+    $posSelect.attr('name', 'position');
+
+    if (!electionId) {
+        $posSelect.html('<option value=""><?php echo _l('membership_select_election_first'); ?></option>');
+        return;
+    }
+
+    $.ajax({
+        url: '<?php echo admin_url('membership/ajax_get_positions_by_election'); ?>/' + electionId,
+        type: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            $posSelect.html('<option value=""><?php echo _l('membership_select_position'); ?></option>');
+            if (resp.success && resp.positions.length > 0) {
+                $.each(resp.positions, function(i, pos) {
+                    $posSelect.append($('<option>').val(pos).text(pos));
+                });
+                // Add "Other" option so admin can type a custom position
+                $posSelect.append('<option value="__other__"><?php echo _l('membership_other'); ?></option>');
+            } else {
+                // No positions configured for this election — show free-text field
+                $posSelect.html('<option value="__other__"><?php echo _l('membership_type_position'); ?></option>');
+                $posCustom.show().attr('required', true).attr('name', 'position');
+                $posSelect.removeAttr('name');
+            }
+        },
+        error: function() {
+            $posSelect.html('<option value=""><?php echo _l('membership_error_loading'); ?></option>');
+        }
+    });
+}
+
+// Show/hide custom text input when "Other" is selected
+function handlePositionOther(val) {
+    var $posSelect = $('#nomination_position');
+    var $posCustom = $('#nomination_position_custom');
+    if (val === '__other__') {
+        $posCustom.show().attr('required', true).attr('name', 'position');
+        $posSelect.removeAttr('name');
+    } else {
+        $posCustom.hide().removeAttr('required').removeAttr('name').val('');
+        $posSelect.attr('name', 'position');
+    }
+}
+
+// Reset position select when modal closes
+$('#nominationModal').on('hidden.bs.modal', function() {
+    $('#nomination_position').html('<option value=""><?php echo _l('membership_select_election_first'); ?></option>').attr('name', 'position');
+    $('#nomination_position_custom').hide().removeAttr('required').removeAttr('name').val('');
+    $('#nomination_election_id').val('');
+});
 
 $(document).ready(function() {
     // Sort table by Election column (index 1) by default

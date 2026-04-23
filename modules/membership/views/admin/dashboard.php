@@ -46,15 +46,15 @@
                                     <tr>
                                         <th><?php echo _l('membership_event_title'); ?></th>
                                         <th><?php echo _l('membership_event_date'); ?></th>
-                                        <th><?php echo _l('membership_event_location'); ?></th>
+                                        <th><?php echo _l('membership_event_end_date'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($upcoming_events as $event): ?>
                                         <tr>
-                                            <td><?php echo $event['title']; ?></td>
+                                            <td><?php echo e($event['title']); ?></td>
                                             <td><?php echo _dt($event['event_date']); ?></td>
-                                            <td><?php echo $event['location']; ?></td>
+                                            <td><?php echo $event['event_end_date'] ? _dt($event['event_end_date']) : '-'; ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>

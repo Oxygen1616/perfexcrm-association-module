@@ -27,11 +27,15 @@ class Membership_model extends CI_Model
     protected $table_board_members = 'tblmembership_board_members';
     protected $table_vote_comments = 'tblmembership_vote_comments';
     protected $table_positions = 'tblmembership_positions';
+    protected $table_membership_types   = 'tblmembership_types';
+    protected $table_announcements      = 'tblmembership_announcements';
+    protected $table_event_settings     = 'tblmembership_event_settings';
 
     public function __construct()
     {
         parent::__construct();
         $this->check_tables();
+        $this->_maybe_migrate();
     }
 
     private function check_tables()
@@ -63,6 +67,65 @@ class Membership_model extends CI_Model
         }
 
         return true;
+    }
+
+    private function _maybe_migrate()
+    {
+        // ── Jobs: add new columns if missing ─────────────────────────
+        $tbl = db_prefix() . 'membership_jobs';
+        if ($this->db->table_exists($tbl)) {
+            if (!$this->db->field_exists('posted_by_type', $tbl)) {
+                $this->db->query("ALTER TABLE `{$tbl}` ADD COLUMN `posted_by_type` enum('admin','member') NOT NULL DEFAULT 'member' AFTER `status`");
+            }
+            if (!$this->db->field_exists('posted_by_name', $tbl)) {
+                $this->db->query("ALTER TABLE `{$tbl}` ADD COLUMN `posted_by_name` varchar(255) DEFAULT NULL AFTER `posted_by_type`");
+            }
+            if (!$this->db->field_exists('external_url', $tbl)) {
+                $this->db->query("ALTER TABLE `{$tbl}` ADD COLUMN `external_url` varchar(500) DEFAULT NULL AFTER `salary_range`");
+            }
+        }
+
+        // ── Nominations: add nominated_by_contact_id if missing ──────
+        $nom_tbl = db_prefix() . 'membership_nominations';
+        if ($this->db->table_exists($nom_tbl) && !$this->db->field_exists('nominated_by_contact_id', $nom_tbl)) {
+            $this->db->query("ALTER TABLE `{$nom_tbl}` ADD COLUMN `nominated_by_contact_id` int(11) DEFAULT NULL AFTER `member_id`");
+        }
+
+        // ── Elections: add positions column if missing ────────────────
+        $elec_tbl = db_prefix() . 'membership_elections';
+        if ($this->db->table_exists($elec_tbl) && !$this->db->field_exists('positions', $elec_tbl)) {
+            $this->db->query("ALTER TABLE `{$elec_tbl}` ADD COLUMN `positions` text DEFAULT NULL AFTER `description`");
+        }
+
+        // ── Positions: add election_id column if missing ──────────────
+        $pos_tbl = db_prefix() . 'membership_positions';
+        if ($this->db->table_exists($pos_tbl) && !$this->db->field_exists('election_id', $pos_tbl)) {
+            $this->db->query("ALTER TABLE `{$pos_tbl}` ADD COLUMN `election_id` int(11) DEFAULT NULL AFTER `id`");
+            $this->db->query("ALTER TABLE `{$pos_tbl}` ADD KEY `election_id` (`election_id`)");
+        }
+
+        // ── Announcements table ───────────────────────────────────────
+        if (!$this->db->table_exists($this->table_announcements)) {
+            $this->db->query('CREATE TABLE `' . $this->table_announcements . "` (
+              `id` int(11) NOT NULL AUTO_INCREMENT,
+              `title` varchar(255) NOT NULL,
+              `body` text NOT NULL,
+              `priority` enum('normal','important','urgent') NOT NULL DEFAULT 'normal',
+              `staff_id` int(11) NOT NULL,
+              `created_at` datetime NOT NULL,
+              `updated_at` datetime DEFAULT NULL,
+              PRIMARY KEY (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=" . $this->db->char_set);
+        }
+
+        // ── Per-event registration settings ──────────────────────────
+        if (!$this->db->table_exists($this->table_event_settings)) {
+            $this->db->query('CREATE TABLE `' . $this->table_event_settings . "` (
+              `event_id` int(11) NOT NULL,
+              `registration_open` tinyint(1) NOT NULL DEFAULT 1,
+              PRIMARY KEY (`event_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=" . $this->db->char_set);
+        }
     }
 
     /**
@@ -100,12 +163,56 @@ class Membership_model extends CI_Model
         if ($status) {
             $this->db->where('tm.status', $status);
         }
-        $this->db->select('tm.*, tc.firstname, tc.lastname, tc.email');
+        $this->db->select('tm.*, tc.firstname, tc.lastname, tc.email, tc.phonenumber');
         $this->db->from($this->table . ' tm');
         $this->db->join(db_prefix() . 'contacts tc', 'tc.id = tm.contact_id', 'left');
         return $this->db->order_by('tc.firstname', 'ASC')
             ->get()
             ->result_array();
+    }
+
+    public function get_membership_types($status = null)
+    {
+        if (!$this->db->table_exists($this->table_membership_types)) {
+            $this->db->query("CREATE TABLE IF NOT EXISTS `{$this->table_membership_types}` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `name` varchar(100) NOT NULL,
+                `amount` decimal(10,2) NOT NULL DEFAULT '0.00',
+                `description` text DEFAULT NULL,
+                `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+                `created_at` datetime NOT NULL,
+                PRIMARY KEY (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+            return [];
+        }
+        if ($status) {
+            $this->db->where('status', $status);
+        }
+        return $this->db->order_by('name', 'ASC')->get($this->table_membership_types)->result_array();
+    }
+
+    public function get_membership_type($id)
+    {
+        return $this->db->where('id', $id)->get($this->table_membership_types)->row_array();
+    }
+
+    public function create_membership_type($data)
+    {
+        $data['created_at'] = date('Y-m-d H:i:s');
+        $this->db->insert($this->table_membership_types, $data);
+        return $this->db->insert_id();
+    }
+
+    public function update_membership_type($id, $data)
+    {
+        $this->db->where('id', $id);
+        return $this->db->update($this->table_membership_types, $data);
+    }
+
+    public function delete_membership_type($id)
+    {
+        $this->db->where('id', $id);
+        return $this->db->delete($this->table_membership_types);
     }
 
     public function get_member($id)
@@ -268,24 +375,40 @@ class Membership_model extends CI_Model
         return $this->update_story($id, ['status' => 'rejected']);
     }
 
+    private function _events_select()
+    {
+        // false on select() disables CI3 identifier escaping so AS aliases survive;
+        // backtick start/end manually because they are MySQL reserved words
+        $this->db->select('eventid AS id, title, `start` AS event_date, `end` AS event_end_date, description, color', false);
+        $this->db->where('public', 1);
+    }
+
     public function get_events($upcoming = false)
     {
-        if (!$this->db->table_exists($this->table_events)) {
-            return [];
-        }
+        $this->_events_select();
         if ($upcoming) {
-            $this->db->where('event_date >=', date('Y-m-d H:i:s'));
+            $this->db->where('`start` >=', date('Y-m-d H:i:s'));
         }
-        return $this->db->order_by('event_date', 'ASC')
-            ->get($this->table_events)
+        return $this->db->order_by('`start`', 'ASC')
+            ->get(db_prefix() . 'events')
+            ->result_array();
+    }
+
+    public function get_events_by_week_range($from, $to)
+    {
+        $this->_events_select();
+        $this->db->where('`start` >=', $from);
+        $this->db->where('`start` <=', $to);
+        return $this->db->order_by('`start`', 'ASC')
+            ->get(db_prefix() . 'events')
             ->result_array();
     }
 
     public function get_event($id)
     {
-        return $this->db->where('id', $id)
-            ->get($this->table_events)
-            ->row_array();
+        $this->_events_select();
+        $this->db->where('eventid', $id);
+        return $this->db->get(db_prefix() . 'events')->row_array();
     }
 
     public function create_event($data)
@@ -296,20 +419,41 @@ class Membership_model extends CI_Model
         return $this->db->insert_id();
     }
 
+    /**
+     * Fetch all raw columns from tblevents for the edit form.
+     */
+    public function get_event_for_edit($id)
+    {
+        return $this->db->where('eventid', (int) $id)
+            ->get(db_prefix() . 'events')
+            ->row_array();
+    }
+
+    /**
+     * Update a Perfex calendar event in tblevents.
+     */
+    public function update_perfex_event($id, $data)
+    {
+        $this->db->where('eventid', (int) $id);
+        return $this->db->update(db_prefix() . 'events', $data);
+    }
+
     public function update_event($id, $data)
     {
-        $data['updated_at'] = date('Y-m-d H:i:s');
-        $this->db->where('id', $id);
-        return $this->db->update($this->table_events, $data);
+        // Legacy method kept for safety — now delegates to tblevents
+        return $this->update_perfex_event($id, $data);
     }
 
     public function delete_event($id)
     {
+        // Remove registrations first, then remove the membership-side settings row
         $this->db->where('event_id', $id);
         $this->db->delete($this->table_event_registrations);
 
-        $this->db->where('id', $id);
-        return $this->db->delete($this->table_events);
+        $this->db->where('event_id', $id);
+        $this->db->delete($this->table_event_settings);
+
+        // NOTE: we intentionally do NOT delete from tblevents — use the Perfex calendar for that
     }
 
     public function register_for_event($event_id, $contact_id)
@@ -327,12 +471,7 @@ class Membership_model extends CI_Model
             return false;
         }
 
-        if ($event['max_attendees']) {
-            $count = $this->get_event_registration_count($event_id);
-            if ($count >= $event['max_attendees']) {
-                return false;
-            }
-        }
+        // max_attendees is not a field on the core events table — skip capacity check
 
         $qr_code = $this->generate_qr_code($event_id, $contact_id);
 
@@ -363,18 +502,83 @@ class Membership_model extends CI_Model
 
     public function get_event_registrations($event_id)
     {
-        return $this->db->where('event_id', $event_id)
+        $this->db->select('mer.*, c.firstname, c.lastname, c.email');
+        $this->db->from($this->table_event_registrations . ' mer');
+        $this->db->join(db_prefix() . 'contacts c', 'c.id = mer.contact_id', 'left');
+        $this->db->where('mer.event_id', $event_id);
+        $this->db->order_by('mer.registered_at', 'ASC');
+        return $this->db->get()->result_array();
+    }
+
+    public function get_event_registration_counts()
+    {
+        $rows = $this->db
+            ->select('event_id, COUNT(*) as cnt')
+            ->group_by('event_id')
             ->get($this->table_event_registrations)
             ->result_array();
+        $map = [];
+        foreach ($rows as $r) {
+            $map[$r['event_id']] = (int) $r['cnt'];
+        }
+        return $map;
+    }
+
+    /**
+     * Returns true when registration is open for a specific event.
+     * Default is OPEN unless explicitly closed in tblmembership_event_settings.
+     */
+    public function is_event_registration_open($event_id)
+    {
+        $row = $this->db->where('event_id', (int) $event_id)
+            ->get($this->table_event_settings)
+            ->row_array();
+        return ($row === null) ? true : (bool)(int) $row['registration_open'];
+    }
+
+    /**
+     * Returns map of [event_id => registration_open (1/0)] for ALL events
+     * that have an explicit setting row. Events with no row default to open.
+     */
+    public function get_event_registration_open_map()
+    {
+        $rows = $this->db->get($this->table_event_settings)->result_array();
+        $map  = [];
+        foreach ($rows as $r) {
+            $map[(int) $r['event_id']] = (int) $r['registration_open'];
+        }
+        return $map;
+    }
+
+    /**
+     * Open or close registration for a single event (upsert).
+     */
+    public function set_event_registration($event_id, $open)
+    {
+        $event_id = (int) $event_id;
+        $open     = $open ? 1 : 0;
+        $existing = $this->db->where('event_id', $event_id)
+            ->get($this->table_event_settings)
+            ->row_array();
+        if ($existing) {
+            $this->db->where('event_id', $event_id)
+                ->update($this->table_event_settings, ['registration_open' => $open]);
+        } else {
+            $this->db->insert($this->table_event_settings, [
+                'event_id'          => $event_id,
+                'registration_open' => $open,
+            ]);
+        }
+        return true;
     }
 
     public function get_my_registrations($contact_id)
     {
-        $this->db->select('mer.*, me.title as event_title, me.event_date, me.location');
+        $this->db->select('mer.*, e.title as event_title, e.`start` as event_date', false);
         $this->db->from($this->table_event_registrations . ' mer');
-        $this->db->join($this->table_events . ' me', 'me.id = mer.event_id');
+        $this->db->join(db_prefix() . 'events e', 'e.eventid = mer.event_id');
         $this->db->where('mer.contact_id', $contact_id);
-        $this->db->order_by('me.event_date', 'ASC');
+        $this->db->order_by('e.`start`', 'ASC');
         return $this->db->get()->result_array();
     }
 
@@ -584,49 +788,106 @@ class Membership_model extends CI_Model
 
                 if ($contact && $contact->email) {
                     send_mail_template(
-                        'membership-event-reminder',
+                        'Membership_event_reminder',
+                        'membership',
                         $contact->email,
-                        $contact->firstname,
-                        [
-                            'event_name' => $event['title'],
-                            'event_date' => $event['event_date'],
-                        ]
+                        $contact->id,
+                        $event['title'],
+                        $event['event_date'],
+                        $event['location'] ?? ''
                     );
                 }
             }
         }
     }
 
+    // ── Announcements ─────────────────────────────────────────────────
+    public function get_announcements()
+    {
+        if (!$this->db->table_exists($this->table_announcements)) return [];
+        return $this->db->order_by('created_at', 'DESC')->get($this->table_announcements)->result_array();
+    }
+
+    public function get_announcement($id)
+    {
+        return $this->db->where('id', $id)->get($this->table_announcements)->row_array();
+    }
+
+    public function create_announcement($data)
+    {
+        $data['created_at'] = date('Y-m-d H:i:s');
+        $this->db->insert($this->table_announcements, $data);
+        return $this->db->insert_id();
+    }
+
+    public function update_announcement($id, $data)
+    {
+        $data['updated_at'] = date('Y-m-d H:i:s');
+        $this->db->where('id', $id);
+        return $this->db->update($this->table_announcements, $data);
+    }
+
+    public function delete_announcement($id)
+    {
+        $this->db->where('id', $id);
+        return $this->db->delete($this->table_announcements);
+    }
+
+    // ── Recent members ────────────────────────────────────────────────
+    public function get_recent_members($limit = 5)
+    {
+        if (!$this->db->table_exists($this->table)) return [];
+        $this->db->select('tm.*, tc.firstname, tc.lastname, tc.email');
+        $this->db->from($this->table . ' tm');
+        $this->db->join(db_prefix() . 'contacts tc', 'tc.id = tm.contact_id');
+        $this->db->where('tm.status', 'active');
+        $this->db->order_by('tm.created_at', 'DESC');
+        $this->db->limit($limit);
+        return $this->db->get()->result_array();
+    }
+
+    // ── Active elections for feed ─────────────────────────────────────
+    public function get_active_elections_for_feed()
+    {
+        if (!$this->db->table_exists($this->table_elections)) return [];
+        return $this->db->where('status', 'active')->order_by('start_date', 'DESC')->get($this->table_elections)->result_array();
+    }
+
     public function get_activity_feed($limit = 20)
     {
-        $jobs = $this->get_jobs('approved');
-        $stories = $this->get_stories('approved');
-        $events = $this->get_events(true);
-
         $activities = [];
 
-        foreach ($jobs as $job) {
-            $activities[] = [
-                'type' => 'job',
-                'data' => $job,
-                'date' => $job['created_at'],
-            ];
+        // Jobs
+        foreach ($this->get_jobs('approved') as $job) {
+            $activities[] = ['type' => 'job', 'data' => $job, 'date' => $job['created_at']];
         }
 
-        foreach ($stories as $story) {
-            $activities[] = [
-                'type' => 'story',
-                'data' => $story,
-                'date' => $story['created_at'],
-            ];
+        // Stories
+        foreach ($this->get_stories('approved') as $story) {
+            $activities[] = ['type' => 'story', 'data' => $story, 'date' => $story['created_at']];
         }
 
-        foreach ($events as $event) {
-            $activities[] = [
-                'type' => 'event',
-                'data' => $event,
-                'date' => $event['event_date'],
-            ];
+        // Upcoming events
+        foreach ($this->get_events(true) as $event) {
+            $activities[] = ['type' => 'event', 'data' => $event, 'date' => $event['event_date']];
+        }
+
+        // New members (recently joined active members)
+        foreach ($this->get_recent_members(10) as $m) {
+            $m['title'] = $m['firstname'] . ' ' . $m['lastname'];
+            $activities[] = ['type' => 'new_member', 'data' => $m, 'date' => $m['created_at']];
+        }
+
+        // Active elections
+        foreach ($this->get_active_elections_for_feed() as $election) {
+            $election['title'] = $election['title'];
+            $activities[] = ['type' => 'election', 'data' => $election, 'date' => $election['start_date']];
+        }
+
+        // Announcements
+        foreach ($this->get_announcements() as $ann) {
+            $ann['title'] = $ann['title'];
+            $activities[] = ['type' => 'announcement', 'data' => $ann, 'date' => $ann['created_at']];
         }
 
         usort($activities, function($a, $b) {
@@ -998,7 +1259,7 @@ class Membership_model extends CI_Model
         return $this->db->delete($this->table_election_symbols);
     }
 
-    public function get_nominations($status = null, $election_id = null, $member_id = null)
+    public function get_nominations($status = null, $election_id = null, $member_id = null, $nominator_contact_id = null)
     {
         if ($status) {
             $this->db->where('mn.status', $status);
@@ -1008,6 +1269,9 @@ class Membership_model extends CI_Model
         }
         if ($member_id) {
             $this->db->where('mn.member_id', $member_id);
+        }
+        if ($nominator_contact_id) {
+            $this->db->where('mn.nominated_by_contact_id', $nominator_contact_id);
         }
         $this->db->select('mn.*, me.title as election_title, mes.name as symbol_name, tc.firstname, tc.lastname, tc.email');
         $this->db->from($this->table_nominations . ' mn');
@@ -1022,6 +1286,34 @@ class Membership_model extends CI_Model
     public function get_nomination($id)
     {
         return $this->db->where('id', $id)->get($this->table_nominations)->row_array();
+    }
+
+    /**
+     * Get a nomination with full contact details for both the nominee and the nominator.
+     * Returns: nominee_email, nominee_contact_id, nominee_firstname, nominee_lastname,
+     *          nominator_email, nominator_contact_id, nominator_firstname, nominator_lastname,
+     *          election_title
+     */
+    public function get_nomination_full($id)
+    {
+        $this->db->select('mn.*,
+            me.title as election_title,
+            nominee_c.id    as nominee_contact_id,
+            nominee_c.email as nominee_email,
+            nominee_c.firstname as nominee_firstname,
+            nominee_c.lastname  as nominee_lastname,
+            nominator_c.id    as nominator_contact_id,
+            nominator_c.email as nominator_email,
+            nominator_c.firstname as nominator_firstname,
+            nominator_c.lastname  as nominator_lastname
+        ');
+        $this->db->from($this->table_nominations . ' mn');
+        $this->db->join($this->table_elections . ' me',         'me.id = mn.election_id',                  'left');
+        $this->db->join($this->table . ' nominee_m',            'nominee_m.id = mn.member_id',              'left');
+        $this->db->join(db_prefix() . 'contacts nominee_c',    'nominee_c.id = nominee_m.contact_id',      'left');
+        $this->db->join(db_prefix() . 'contacts nominator_c',  'nominator_c.id = mn.nominated_by_contact_id', 'left');
+        $this->db->where('mn.id', (int)$id);
+        return $this->db->get()->row_array();
     }
 
     public function get_nomination_by_member_and_election($member_id, $election_id)
@@ -1103,7 +1395,7 @@ class Membership_model extends CI_Model
         if ($status) {
             $this->db->where('mbm.status', $status);
         }
-        $this->db->select('mbm.*, me.title as election_title, tc.firstname, tc.lastname, tc.email');
+        $this->db->select('mbm.*, me.title as election_title, tc.firstname, tc.lastname, tc.email, tc.phonenumber, tc.id as contact_id');
         $this->db->from($this->table_board_members . ' mbm');
         $this->db->join($this->table_elections . ' me', 'me.id = mbm.election_id', 'left');
         $this->db->join($this->table . ' tm', 'tm.id = mbm.member_id', 'left');
@@ -1214,14 +1506,23 @@ class Membership_model extends CI_Model
         return $this->db->order_by('name', 'ASC')->get($this->table_positions)->result_array();
     }
 
-    public function get_positions()
+    public function get_positions($election_id = null)
     {
-        return $this->get_position(null);
+        if (!$this->db->table_exists($this->table_positions)) {
+            return [];
+        }
+        if ($election_id) {
+            $this->db->where('election_id', (int)$election_id);
+        }
+        return $this->db->order_by('name', 'ASC')->get($this->table_positions)->result_array();
     }
 
     public function create_position($data)
     {
         $data['created_at'] = date('Y-m-d H:i:s');
+        if (empty($data['election_id'])) {
+            $data['election_id'] = null;
+        }
         $this->db->insert($this->table_positions, $data);
         return $this->db->insert_id();
     }
@@ -1229,6 +1530,9 @@ class Membership_model extends CI_Model
     public function update_position($id, $data)
     {
         $data['updated_at'] = date('Y-m-d H:i:s');
+        if (empty($data['election_id'])) {
+            $data['election_id'] = null;
+        }
         $this->db->where('id', $id);
         return $this->db->update($this->table_positions, $data);
     }

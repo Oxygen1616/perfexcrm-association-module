@@ -74,7 +74,10 @@ $lang['membership_job_location'] = 'Location';
 $lang['membership_job_salary'] = 'Salary Range';
 $lang['membership_job_description'] = 'Description';
 $lang['membership_job_posted_by'] = 'Posted By';
-$lang['membership_job_status'] = 'Status';
+$lang['membership_job_status']          = 'Status';
+$lang['membership_job_status_pending']  = 'Pending';
+$lang['membership_job_status_approved'] = 'Approved';
+$lang['membership_job_status_rejected'] = 'Rejected';
 $lang['membership_no_jobs'] = 'No jobs available';
 $lang['membership_job_created'] = 'Job created successfully';
 $lang['membership_job_updated'] = 'Job updated successfully';
@@ -99,14 +102,20 @@ $lang['membership_story_rejected'] = 'Story rejected';
 $lang['membership_story_submitted'] = 'Story submitted for approval';
 
 $lang['membership_add_event'] = 'Add Event';
-$lang['membership_open_calendar'] = 'Open Calendar';
-$lang['membership_events_info'] = 'Use the calendar to create and manage events for your organization.';
-$lang['membership_event_title'] = 'Event Title';
-$lang['membership_event_date'] = 'Date';
-$lang['membership_event_end'] = 'End Date';
+$lang['membership_open_calendar']        = 'Open Calendar';
+$lang['membership_manage_in_calendar']   = 'Manage in Calendar';
+$lang['membership_events_calendar_hint'] = 'Events are pulled from the Perfex CRM calendar. Mark an event as <strong>Public</strong> in the calendar to make it visible to members here. You can edit basic details directly below, or open the full calendar for advanced options.';
+$lang['membership_events_info']          = 'Use the calendar to create and manage events for your organization.';
+$lang['membership_my_registrations'] = 'My Registrations';
+$lang['membership_event_title']      = 'Event Title';
+$lang['membership_event_date']     = 'Date';
+$lang['membership_event_end_date'] = 'End Date';
+$lang['membership_event_end']      = 'End Date';
 $lang['membership_event_location'] = 'Location';
 $lang['membership_event_attendees'] = 'Attendees';
-$lang['membership_no_events'] = 'No upcoming events';
+$lang['membership_edit_event']     = 'Edit Event';
+$lang['membership_unlimited']      = 'Unlimited';
+$lang['membership_no_events']      = 'No events found';
 $lang['membership_no_upcoming_events'] = 'No upcoming events';
 $lang['membership_event_created'] = 'Event created successfully';
 $lang['membership_event_updated'] = 'Event updated successfully';
@@ -389,7 +398,9 @@ $lang['membership_status'] = 'Status';
 
 $lang['membership_apply_nomination'] = 'Add Nomination';
 $lang['membership_available_elections'] = 'Available Elections';
+$lang['membership_past_elections']      = 'Past Elections';
 $lang['membership_my_nominations'] = 'My Nominations';
+$lang['membership_no_nominations']  = 'You have not submitted any nominations yet';
 $lang['membership_nomination_submitted'] = 'Nomination submitted successfully';
 $lang['membership_nomination_failed'] = 'Failed to submit nomination';
 $lang['membership_already_nominated'] = 'You have already submitted a nomination for this election';
@@ -442,15 +453,162 @@ $lang['membership_committee_category'] = 'Category';
 $lang['membership_currency_helper'] = 'Enter the monthly dues amount in your default currency';
 
 // Positions
-$lang['membership_positions']               = 'Positions';
-$lang['membership_new_position']            = 'New Position';
-$lang['membership_edit_position']           = 'Edit Position';
-$lang['membership_position_name']           = 'Position Name';
-$lang['membership_position_description']    = 'Description';
-$lang['membership_options']                 = 'Options';
-$lang['membership_no_positions_found']      = 'No positions found';
-$lang['membership_position_created']        = 'Position created successfully';
-$lang['membership_position_updated']        = 'Position updated successfully';
-$lang['membership_position_deleted']        = 'Position deleted successfully';
-$lang['membership_confirm_position_delete'] = 'Are you sure you want to delete this position?';
-$lang['membership_loading']                 = 'Loading...';
+$lang['membership_positions']                     = 'Positions';
+$lang['membership_new_position']                  = 'New Position';
+$lang['membership_edit_position']                 = 'Edit Position';
+$lang['membership_position_name']                 = 'Position Name';
+$lang['membership_position_description']          = 'Description';
+$lang['membership_options']                       = 'Options';
+$lang['membership_no_positions_found']            = 'No positions found';
+$lang['membership_no_positions_for_election']     = 'No positions found for this election.';
+$lang['membership_position_created']              = 'Position created successfully';
+$lang['membership_position_updated']              = 'Position updated successfully';
+$lang['membership_position_deleted']              = 'Position deleted successfully';
+$lang['membership_confirm_position_delete']       = 'Are you sure you want to delete this position?';
+$lang['membership_positions_hint']                = 'comma-separated';
+$lang['membership_positions_placeholder']         = 'e.g. President, Secretary, Treasurer';
+$lang['membership_filter_by_election']            = 'Filter by Election';
+$lang['membership_filter_by_position']            = 'Filter by Position';
+$lang['membership_all_elections']                 = 'All Elections';
+$lang['membership_all_positions']                 = 'All Positions';
+$lang['membership_no_election']                   = '— No Election —';
+$lang['membership_position_election_hint']        = 'Link this position to a specific election (optional).';
+$lang['membership_no_candidates_for_position']    = 'No candidates found for the selected position.';
+$lang['membership_loading']                       = 'Loading...';
+
+// Card display settings
+$lang['membership_card_display_settings']       = 'Member Card Display Settings';
+$lang['membership_members_card']                = 'Members Cards';
+$lang['membership_board_members_card']          = 'Board Members Cards';
+$lang['membership_card_settings_desc']          = 'Choose which fields to show on each card.';
+$lang['membership_card_field_photo']            = 'Profile Picture';
+$lang['membership_card_field_membership_type']  = 'Membership Type';
+$lang['membership_card_field_profession']       = 'Profession';
+$lang['membership_card_field_status']           = 'Status Badge';
+$lang['membership_card_field_position']         = 'Position';
+$lang['membership_card_field_election']         = 'Election Title';
+$lang['membership_card_field_email']            = 'Email Address';
+$lang['membership_card_field_phone']            = 'Phone Number';
+$lang['membership_no_members_found']            = 'No members found.';
+$lang['membership_cards_per_page']              = 'Cards per page';
+
+// Membership Types
+$lang['membership_types']           = 'Membership Types';
+$lang['membership_add_type']        = 'Add Membership Type';
+$lang['membership_edit_type']       = 'Edit Membership Type';
+$lang['membership_type_name']       = 'Type Name';
+$lang['membership_type_amount']     = 'Amount';
+$lang['membership_no_types_found']  = 'No membership types found.';
+$lang['membership_type_created']    = 'Membership type created successfully.';
+$lang['membership_type_updated']    = 'Membership type updated successfully.';
+$lang['membership_type_deleted']    = 'Membership type deleted successfully.';
+$lang['membership_select_type']     = 'Select membership type';
+
+// Events — week grouping & actions
+$lang['membership_this_week']              = 'This Week';
+$lang['membership_next_week']              = 'Next Week';
+$lang['membership_later_events']           = 'Later';
+$lang['membership_no_events_this_week']    = 'No events scheduled for this week.';
+$lang['membership_no_events_next_week']    = 'No events scheduled for next week.';
+$lang['membership_view_all_events']        = 'View all events';
+$lang['membership_pending_actions']        = 'Actions Needed';
+$lang['membership_no_pending_actions']     = 'All caught up!';
+$lang['membership_action_register_event']  = 'Register for event';
+$lang['membership_max_attendees']          = 'Max attendees';
+$lang['membership_members_only']           = 'Members only';
+$lang['membership_view_details']           = 'View details';
+
+// Activity Feed — new types
+$lang['membership_new_member_joined']      = 'New Member Joined';
+$lang['membership_election_open']          = 'Election Now Open';
+$lang['membership_announcement']           = 'Announcement';
+$lang['membership_job']                    = 'Job';
+$lang['membership_story']                  = 'Story';
+$lang['membership_event']                  = 'Event';
+$lang['membership_election']               = 'Election';
+$lang['membership_member']                 = 'Member';
+$lang['membership_admin']                  = 'Admin';
+$lang['membership_unknown']                = 'Unknown';
+
+// Pending Actions
+$lang['membership_action_unpaid_invoice']  = 'Unpaid invoice';
+$lang['membership_action_vote_reminder']   = 'You haven\'t voted yet';
+$lang['membership_action_profile_incomplete'] = 'Profile incomplete';
+$lang['membership_pay_now']                = 'Pay Now';
+$lang['membership_complete_profile']       = 'Complete Profile';
+$lang['membership_phone']                  = 'Phone Number';
+
+// Announcements
+$lang['membership_announcements']          = 'Announcements';
+$lang['membership_new_announcement']       = 'New Announcement';
+$lang['membership_edit_announcement']      = 'Edit Announcement';
+$lang['membership_announcement_title']     = 'Title';
+$lang['membership_announcement_body']      = 'Message';
+$lang['membership_announcement_priority']  = 'Priority';
+$lang['membership_priority_normal']        = 'Normal';
+$lang['membership_priority_important']     = 'Important';
+$lang['membership_priority_urgent']        = 'Urgent';
+$lang['membership_no_announcements']       = 'No announcements yet.';
+$lang['membership_announcement_created']   = 'Announcement posted successfully.';
+$lang['membership_announcement_updated']   = 'Announcement updated successfully.';
+$lang['membership_announcement_deleted']   = 'Announcement deleted.';
+$lang['membership_date_posted']            = 'Date Posted';
+$lang['membership_save']                   = 'Save';
+
+// Jobs — enhanced
+$lang['membership_post_job']               = 'Post a Job';
+$lang['membership_edit_job']               = 'Edit Job';
+$lang['membership_job_apply_link']         = 'Apply Link (URL)';
+$lang['membership_apply_link']             = 'Apply';
+$lang['membership_apply_now']              = 'Apply Now';
+$lang['membership_my_jobs']                = 'My Job Posts';
+$lang['membership_be_first_to_post']       = 'Be the first to post a job';
+$lang['membership_job_post_notice']        = 'Your job posting will be reviewed by an admin before it appears publicly.';
+$lang['membership_submit_for_review']      = 'Submit for Review';
+
+// File upload
+$lang['membership_invalid_file_type']      = 'Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.';
+
+// Members page search
+$lang['membership_search_members']         = 'Search members…';
+$lang['membership_search_board']           = 'Search board members…';
+$lang['membership_no_search_results']      = 'No members match your search.';
+
+// Notifications
+$lang['membership_notification_member_active']              = 'Membership approved for %s';
+$lang['membership_notification_member_pending']             = 'Membership of %s set to pending';
+$lang['membership_notification_member_suspended']           = 'Membership of %s has been suspended';
+$lang['membership_notification_nomination_submitted']       = 'New nomination submitted by %s';
+$lang['membership_notification_new_announcement']           = 'New announcement posted: %s';
+$lang['membership_notification_vote_cast']                  = 'A vote was cast in: %s';
+$lang['membership_notification_nomination_approved']        = 'Nomination approved for %s';
+$lang['membership_notification_nomination_rejected']        = 'Nomination rejected for %s';
+
+// Position dropdown in nominations
+$lang['membership_select_election_first']  = '— Select an election first —';
+$lang['membership_select_position']        = '— Select a position —';
+$lang['membership_or_type_position']       = 'Or type a custom position…';
+$lang['membership_position_hint']          = 'Positions are loaded based on the selected election.';
+$lang['membership_other']                  = 'Other (type below)';
+$lang['membership_type_position']          = 'Type position manually';
+$lang['membership_error_loading']          = 'Error loading options';
+
+// Later events — no events placeholder
+$lang['membership_later_events_none']            = 'No events scheduled for later.';
+
+// Event registrations (admin view)
+$lang['membership_registrations']               = 'Registrations';
+$lang['membership_view_registrations']          = 'View Registrations';
+$lang['membership_no_registrations']            = 'No registrations yet.';
+$lang['membership_registered_at']               = 'Registered At';
+$lang['membership_registration_count']          = 'Registered';
+
+// Event form fields
+$lang['membership_event_color']                   = 'Colour';
+$lang['membership_event_public']                  = 'Show to members (Public)';
+
+// Per-event registration toggle
+$lang['membership_event_registration_open']       = 'Registration';
+$lang['membership_reg_open']                      = 'Open';
+$lang['membership_reg_closed']                    = 'Closed';
+$lang['membership_event_registration_closed_msg'] = 'Registration for this event is currently closed. Please contact the administrator.';

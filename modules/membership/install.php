@@ -74,6 +74,7 @@ if (!$CI->db->table_exists(db_prefix() . 'membership_elections')) {
       `id` int(11) NOT NULL AUTO_INCREMENT,
       `title` varchar(255) NOT NULL,
       `description` text DEFAULT NULL,
+      `positions` text DEFAULT NULL,
       `nomination_fee` decimal(10,2) NOT NULL DEFAULT 0.00,
       `start_date` datetime NOT NULL,
       `end_date` datetime NOT NULL,
@@ -139,11 +140,13 @@ if (!$CI->db->table_exists(db_prefix() . 'membership_members')) {
 if (!$CI->db->table_exists(db_prefix() . 'membership_positions')) {
     $CI->db->query('CREATE TABLE `' . db_prefix() . "membership_positions` (
       `id` int(11) NOT NULL AUTO_INCREMENT,
+      `election_id` int(11) DEFAULT NULL,
       `name` varchar(255) NOT NULL,
       `description` text DEFAULT NULL,
       `created_at` datetime NOT NULL,
       `updated_at` datetime DEFAULT NULL,
-      PRIMARY KEY (`id`)
+      PRIMARY KEY (`id`),
+      KEY `election_id` (`election_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=" . $CI->db->char_set);
 }
 
@@ -297,6 +300,7 @@ if (!$CI->db->table_exists(db_prefix() . 'membership_nominations')) {
       `election_id` int(11) NOT NULL,
       `committee_id` int(11) DEFAULT NULL,
       `member_id` int(11) NOT NULL,
+      `nominated_by_contact_id` int(11) DEFAULT NULL,
       `position` varchar(255) NOT NULL,
       `manifesto` text DEFAULT NULL,
       `symbol_id` int(11) DEFAULT NULL,
@@ -311,6 +315,7 @@ if (!$CI->db->table_exists(db_prefix() . 'membership_nominations')) {
       KEY `election_id` (`election_id`),
       KEY `committee_id` (`committee_id`),
       KEY `member_id` (`member_id`),
+      KEY `nominated_by_contact_id` (`nominated_by_contact_id`),
       KEY `status` (`status`)
     ) ENGINE=InnoDB DEFAULT CHARSET=" . $CI->db->char_set);
 }
@@ -347,6 +352,43 @@ if (!$CI->db->table_exists(db_prefix() . 'membership_board_members')) {
       KEY `member_id` (`member_id`),
       KEY `election_id` (`election_id`),
       KEY `status` (`status`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=" . $CI->db->char_set);
+}
+
+// ── Announcements table ───────────────────────────────────────────
+if (!$CI->db->table_exists(db_prefix() . 'membership_announcements')) {
+    $CI->db->query('CREATE TABLE `' . db_prefix() . "membership_announcements` (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `title` varchar(255) NOT NULL,
+      `body` text NOT NULL,
+      `priority` enum('normal','important','urgent') NOT NULL DEFAULT 'normal',
+      `staff_id` int(11) NOT NULL,
+      `created_at` datetime NOT NULL,
+      `updated_at` datetime DEFAULT NULL,
+      PRIMARY KEY (`id`),
+      KEY `staff_id` (`staff_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=" . $CI->db->char_set);
+}
+
+// ── Jobs column migrations (safe – only run if column missing) ─────
+if ($CI->db->table_exists(db_prefix() . 'membership_jobs')) {
+    if (!$CI->db->field_exists('posted_by_type', db_prefix() . 'membership_jobs')) {
+        $CI->db->query("ALTER TABLE `" . db_prefix() . "membership_jobs` ADD COLUMN `posted_by_type` enum('admin','member') NOT NULL DEFAULT 'member' AFTER `status`");
+    }
+    if (!$CI->db->field_exists('posted_by_name', db_prefix() . 'membership_jobs')) {
+        $CI->db->query("ALTER TABLE `" . db_prefix() . "membership_jobs` ADD COLUMN `posted_by_name` varchar(255) DEFAULT NULL AFTER `posted_by_type`");
+    }
+    if (!$CI->db->field_exists('external_url', db_prefix() . 'membership_jobs')) {
+        $CI->db->query("ALTER TABLE `" . db_prefix() . "membership_jobs` ADD COLUMN `external_url` varchar(500) DEFAULT NULL AFTER `salary_range`");
+    }
+}
+
+// Per-event settings (registration open/closed toggle)
+if (!$CI->db->table_exists(db_prefix() . 'membership_event_settings')) {
+    $CI->db->query('CREATE TABLE `' . db_prefix() . "membership_event_settings` (
+      `event_id` int(11) NOT NULL,
+      `registration_open` tinyint(1) NOT NULL DEFAULT 1,
+      PRIMARY KEY (`event_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=" . $CI->db->char_set);
 }
 

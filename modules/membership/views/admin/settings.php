@@ -8,49 +8,144 @@
             </div>
         </div>
 
-        <!-- General Settings -->
+        <!-- Membership Types -->
         <div class="row">
             <div class="col-md-12">
                 <div class="panel_s">
                     <div class="panel-heading">
-                        <h4 class="panel-title"><?php echo _l('membership_general_settings'); ?></h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4 class="panel-title"><?php echo _l('membership_types'); ?></h4>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="openMembershipTypeModal()">
+                                    <i class="fa fa-plus"></i> <?php echo _l('membership_add_type'); ?>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div class="panel-body">
-                        <?php echo form_open(admin_url('membership/settings')); ?>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="monthly_dues"><?php echo _l('membership_setting_monthly_dues'); ?></label>
-                                        <input type="number" class="form-control" id="monthly_dues" name="monthly_dues" value="<?php echo get_option('membership_monthly_dues') ?: '30.00'; ?>" step="0.01" min="0">
-                                        <small class="text-muted"><?php echo _l('membership_currency_helper'); ?></small>
+                        <?php if (!empty($membership_types)): ?>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th><?php echo _l('membership_type_name'); ?></th>
+                                        <th><?php echo _l('membership_type_amount'); ?></th>
+                                        <th><?php echo _l('membership_description'); ?></th>
+                                        <th><?php echo _l('membership_status'); ?></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($membership_types as $mt): ?>
+                                    <tr>
+                                        <td>
+                                            <?php echo e($mt['name']); ?>
+                                            <div class="row-options">
+                                                <a href="#" onclick="editMembershipType(<?php echo $mt['id']; ?>, '<?php echo addslashes($mt['name']); ?>', '<?php echo $mt['amount']; ?>', '<?php echo addslashes($mt['description']); ?>', '<?php echo $mt['status']; ?>'); return false;"><?php echo _l('membership_edit'); ?></a>
+                                                <span class="text-muted"> | </span>
+                                                <a href="<?php echo admin_url('membership/delete_membership_type/' . $mt['id']); ?>" class="text-danger" onclick="return confirm('<?php echo _l('membership_delete_confirm'); ?>')"><?php echo _l('membership_delete'); ?></a>
+                                            </div>
+                                        </td>
+                                        <td><?php echo app_format_money($mt['amount'], get_option('currency')); ?></td>
+                                        <td><?php echo e($mt['description'] ?: '-'); ?></td>
+                                        <td>
+                                            <span class="label label-<?php echo $mt['status'] == 'active' ? 'success' : 'danger'; ?>">
+                                                <?php echo ucfirst($mt['status']); ?>
+                                            </span>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php else: ?>
+                            <p class="text-muted text-center"><?php echo _l('membership_no_types_found'); ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Member Card Display Settings -->
+        <div class="row mtop15">
+            <div class="col-md-12">
+                <div class="panel_s">
+                    <div class="panel-heading">
+                        <h4 class="panel-title"><i class="fa fa-id-card mright5"></i><?php echo _l('membership_card_display_settings'); ?></h4>
+                    </div>
+                    <div class="panel-body">
+                        <?php echo form_open(admin_url('membership/save_card_settings')); ?>
+                        <div class="row">
+
+                            <!-- Members Card -->
+                            <div class="col-md-6">
+                                <h5 class="tw-font-semibold tw-mb-3 tw-border-b tw-pb-2">
+                                    <i class="fa fa-users mright5 tw-text-neutral-500"></i><?php echo _l('membership_members_card'); ?>
+                                </h5>
+                                <p class="text-muted small"><?php echo _l('membership_card_settings_desc'); ?></p>
+
+                                <?php
+                                $memberFields = [
+                                    'card_show_photo'           => _l('membership_card_field_photo'),
+                                    'card_show_membership_type' => _l('membership_card_field_membership_type'),
+                                    'card_show_profession'      => _l('membership_card_field_profession'),
+                                    'card_show_email'           => _l('membership_card_field_email'),
+                                    'card_show_phone'           => _l('membership_card_field_phone'),
+                                    'card_show_status'          => _l('membership_card_field_status'),
+                                ];
+                                foreach ($memberFields as $key => $label):
+                                    $checked = get_option('membership_' . $key);
+                                    $checked = ($checked === '' || $checked === false) ? true : (bool)$checked; // default on
+                                ?>
+                                <div class="form-group">
+                                    <div class="checkbox checkbox-primary">
+                                        <input type="checkbox" name="<?php echo $key; ?>" id="<?php echo $key; ?>" value="1" <?php echo $checked ? 'checked' : ''; ?>>
+                                        <label for="<?php echo $key; ?>"><?php echo $label; ?></label>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="default_type"><?php echo _l('membership_setting_default_type'); ?></label>
-                                        <input type="text" class="form-control" id="default_type" name="default_type" value="<?php echo get_option('membership_default_type') ?: 'Regular'; ?>">
-                                    </div>
+                                <?php endforeach; ?>
+                                <div class="form-group mtop10">
+                                    <label for="card_per_page"><?php echo _l('membership_cards_per_page'); ?></label>
+                                    <input type="number" name="card_per_page" id="card_per_page" class="form-control" min="1" max="100" value="<?php echo get_option('membership_card_per_page') ?: 9; ?>" style="width:100px;">
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <div class="checkbox checkbox-primary">
-                                            <input type="checkbox" name="auto_approve_jobs" id="auto_approve_jobs" value="1" <?php echo get_option('membership_auto_approve_jobs') ? 'checked' : ''; ?>>
-                                            <label for="auto_approve_jobs"><?php echo _l('membership_setting_auto_approve_jobs'); ?></label>
-                                        </div>
+
+                            <!-- Board Members Card -->
+                            <div class="col-md-6">
+                                <h5 class="tw-font-semibold tw-mb-3 tw-border-b tw-pb-2">
+                                    <i class="fa fa-black-tie mright5 tw-text-neutral-500"></i><?php echo _l('membership_board_members_card'); ?>
+                                </h5>
+                                <p class="text-muted small"><?php echo _l('membership_card_settings_desc'); ?></p>
+
+                                <?php
+                                $boardFields = [
+                                    'board_card_show_photo'    => _l('membership_card_field_photo'),
+                                    'board_card_show_position' => _l('membership_card_field_position'),
+                                    'board_card_show_election' => _l('membership_card_field_election'),
+                                    'board_card_show_email'    => _l('membership_card_field_email'),
+                                    'board_card_show_phone'    => _l('membership_card_field_phone'),
+                                    'board_card_show_status'   => _l('membership_card_field_status'),
+                                ];
+                                foreach ($boardFields as $key => $label):
+                                    $checked = get_option('membership_' . $key);
+                                    $checked = ($checked === '' || $checked === false) ? true : (bool)$checked;
+                                ?>
+                                <div class="form-group">
+                                    <div class="checkbox checkbox-primary">
+                                        <input type="checkbox" name="<?php echo $key; ?>" id="<?php echo $key; ?>" value="1" <?php echo $checked ? 'checked' : ''; ?>>
+                                        <label for="<?php echo $key; ?>"><?php echo $label; ?></label>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <div class="checkbox checkbox-primary">
-                                            <input type="checkbox" name="auto_approve_stories" id="auto_approve_stories" value="1" <?php echo get_option('membership_auto_approve_stories') ? 'checked' : ''; ?>>
-                                            <label for="auto_approve_stories"><?php echo _l('membership_setting_auto_approve_stories'); ?></label>
-                                        </div>
-                                    </div>
+                                <?php endforeach; ?>
+                                <div class="form-group mtop10">
+                                    <label for="board_card_per_page"><?php echo _l('membership_cards_per_page'); ?></label>
+                                    <input type="number" name="board_card_per_page" id="board_card_per_page" class="form-control" min="1" max="100" value="<?php echo get_option('membership_board_card_per_page') ?: 9; ?>" style="width:100px;">
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary mtop15"><?php echo _l('membership_save_settings'); ?></button>
+
+                        </div>
+                        <button type="submit" class="btn btn-primary mtop10"><?php echo _l('membership_save_settings'); ?></button>
                         <?php echo form_close(); ?>
                     </div>
                 </div>
@@ -74,16 +169,46 @@
                         </div>
                     </div>
                     <div class="panel-body">
+
+                        <!-- Election filter -->
+                        <div class="row tw-mb-3">
+                            <div class="col-md-4">
+                                <div class="form-group tw-mb-0">
+                                    <label><?php echo _l('membership_filter_by_election'); ?></label>
+                                    <select id="position-election-filter" class="form-control" onchange="filterPositionsByElection(this.value)">
+                                        <option value=""><?php echo _l('membership_all_elections'); ?></option>
+                                        <?php foreach ($elections as $el): ?>
+                                            <option value="<?php echo (int)$el['id']; ?>" <?php echo isset($election_filter) && $election_filter == $el['id'] ? 'selected' : ''; ?>>
+                                                <?php echo e($el['title']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                         <?php if (count($positions) > 0): ?>
                         <table class="table dt-table">
                             <thead>
                                 <tr>
                                     <th><?php echo _l('membership_position_name'); ?></th>
+                                    <th><?php echo _l('membership_election'); ?></th>
                                     <th><?php echo _l('membership_position_description'); ?></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($positions as $position): ?>
+                                <?php
+                                $linked_election = '';
+                                if (!empty($position['election_id'])) {
+                                    foreach ($elections as $el) {
+                                        if ($el['id'] == $position['election_id']) {
+                                            $linked_election = e($el['title']);
+                                            break;
+                                        }
+                                    }
+                                }
+                                ?>
                                 <tr>
                                     <td>
                                         <a href="#" onclick="position_form(<?php echo $position['id']; ?>); return false;">
@@ -96,13 +221,16 @@
                                                onclick="return confirm('<?php echo _l('membership_confirm_position_delete'); ?>')"><?php echo _l('membership_delete'); ?></a>
                                         </div>
                                     </td>
+                                    <td><?php echo $linked_election ?: '<span class="text-muted">—</span>'; ?></td>
                                     <td><?php echo e($position['description']); ?></td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
                         <?php else: ?>
-                        <div class="alert alert-info"><?php echo _l('membership_no_positions_found'); ?></div>
+                        <div class="alert alert-info">
+                            <?php echo isset($election_filter) && $election_filter ? _l('membership_no_positions_for_election') : _l('membership_no_positions_found'); ?>
+                        </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -288,6 +416,49 @@
     </div>
 </div>
 
+<!-- Membership Type Modal -->
+<div class="modal fade" id="membershipTypeModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title" id="membershipTypeModalTitle"><?php echo _l('membership_add_type'); ?></h4>
+            </div>
+            <?php echo form_open(admin_url('membership/membership_types'), ['id' => 'membershipTypeForm']); ?>
+            <div class="modal-body">
+                <input type="hidden" name="type_id" id="type_id" value="">
+                <div class="form-group">
+                    <label><?php echo _l('membership_type_name'); ?> *</label>
+                    <input type="text" name="name" id="type_name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label><?php echo _l('membership_type_amount'); ?> *</label>
+                    <div class="input-group">
+                        <span class="input-group-addon"><?php echo get_option('currency_symbol') ?: '$'; ?></span>
+                        <input type="number" name="amount" id="type_amount" class="form-control" step="0.01" min="0" value="0.00" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><?php echo _l('membership_description'); ?></label>
+                    <textarea name="description" id="type_description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label><?php echo _l('membership_status'); ?></label>
+                    <select name="status" id="type_status" class="form-control">
+                        <option value="active"><?php echo _l('membership_active'); ?></option>
+                        <option value="inactive"><?php echo _l('membership_inactive'); ?></option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo _l('membership_cancel'); ?></button>
+                <button type="submit" class="btn btn-primary"><?php echo _l('membership_save'); ?></button>
+            </div>
+            <?php echo form_close(); ?>
+        </div>
+    </div>
+</div>
+
 <!-- Committee Category Modal -->
 <div class="modal fade" id="categoryModal" tabindex="-1" role="dialog">
     <div class="modal-dialog">
@@ -335,6 +506,20 @@
             <div class="modal-body">
                 <?php echo form_open(admin_url('membership/positions')); ?>
                 <input type="hidden" name="id" id="position-id" value="">
+                <input type="hidden" name="return_to" value="settings">
+
+                <div class="form-group">
+                    <label for="position-election"><?php echo _l('membership_election'); ?></label>
+                    <select name="election_id" id="position-election" class="form-control selectpicker"
+                            data-none-selected-text="<?php echo _l('membership_select_election'); ?>">
+                        <option value=""><?php echo _l('membership_no_election'); ?></option>
+                        <?php foreach ($elections as $el): ?>
+                            <option value="<?php echo (int)$el['id']; ?>"><?php echo e($el['title']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="text-muted"><?php echo _l('membership_position_election_hint'); ?></small>
+                </div>
+
                 <div class="form-group">
                     <label><?php echo _l('membership_position_name'); ?> <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" name="name" id="position-name" required>
@@ -345,7 +530,7 @@
                 </div>
                 <div class="text-right">
                     <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo _l('membership_close'); ?></button>
-                    <button type="submit" class="btn btn-info"><?php echo _l('membership_submit'); ?></button>
+                    <button type="submit" class="btn btn-primary"><?php echo _l('membership_submit'); ?></button>
                 </div>
                 <?php echo form_close(); ?>
             </div>
@@ -433,14 +618,30 @@ $('#categoryModal').on('hidden.bs.modal', function() {
     document.getElementById('categoryModalTitle').textContent = '<?php echo _l('membership_add_category'); ?>';
 });
 
-// Position modal
+// Position filter
+function filterPositionsByElection(val) {
+    var url = '<?php echo admin_url('membership/settings'); ?>';
+    if (val) url += '?election_id=' + val;
+    window.location.href = url;
+}
+
+function _set_position_election(val) {
+    $('#position-election').val(val || '');
+    if (typeof $.fn.selectpicker !== 'undefined') {
+        $('#position-election').selectpicker('refresh');
+    }
+}
+
 function init_position_form() {
     $('#position-id').val('');
     $('#position-modal-title').text('<?php echo _l('membership_new_position'); ?>');
     $('#position-name').val('');
     $('#position-description').val('');
+    // Pre-select the active election filter so new positions inherit it
+    _set_position_election('<?php echo isset($election_filter) ? (int)$election_filter : ''; ?>');
     $('#position-modal').modal('show');
 }
+
 function position_form(id) {
     $('#position-id').val(id);
     $('#position-modal-title').text('<?php echo _l('membership_edit_position'); ?>');
@@ -448,6 +649,7 @@ function position_form(id) {
         if (response.success) {
             $('#position-name').val(response.position.name);
             $('#position-description').val(response.position.description || '');
+            _set_position_election(response.position.election_id || '');
             $('#position-modal').modal('show');
         } else {
             alert_float('danger', response.message);
@@ -486,6 +688,28 @@ $('#designationModal').on('hidden.bs.modal', function() {
     document.getElementById('designation_description').value = '';
     document.getElementById('designationModalTitle').textContent = '<?php echo _l('membership_add_designation'); ?>';
 });
+
+function openMembershipTypeModal() {
+    document.getElementById('membershipTypeModalTitle').textContent = '<?php echo _l('membership_add_type'); ?>';
+    document.getElementById('membershipTypeForm').action = '<?php echo admin_url('membership/membership_types'); ?>';
+    document.getElementById('type_id').value = '';
+    document.getElementById('type_name').value = '';
+    document.getElementById('type_amount').value = '0.00';
+    document.getElementById('type_description').value = '';
+    document.getElementById('type_status').value = 'active';
+    $('#membershipTypeModal').modal('show');
+}
+
+function editMembershipType(id, name, amount, description, status) {
+    document.getElementById('membershipTypeModalTitle').textContent = '<?php echo _l('membership_edit_type'); ?>';
+    document.getElementById('membershipTypeForm').action = '<?php echo admin_url('membership/membership_types'); ?>/' + id;
+    document.getElementById('type_id').value = id;
+    document.getElementById('type_name').value = name;
+    document.getElementById('type_amount').value = amount;
+    document.getElementById('type_description').value = description;
+    document.getElementById('type_status').value = status;
+    $('#membershipTypeModal').modal('show');
+}
 </script>
 
 <?php init_tail(); ?>

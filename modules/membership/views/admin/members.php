@@ -136,7 +136,7 @@
                         <div id="contact_display_group" style="display:none;">
                             <div class="form-group">
                                 <label><?php echo _l('membership_select_contact'); ?></label>
-                                <input type="hidden" name="contact_id" id="member_contact_id_hidden">
+                                <input type="hidden" name="contact_id" id="member_contact_id_hidden" disabled>
                                 <p id="member_contact_name" class="form-control-static"></p>
                             </div>
                         </div>
@@ -156,7 +156,12 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label><?php echo _l('membership_member_type'); ?></label>
-                            <input type="text" name="membership_type" class="form-control" id="member_membership_type">
+                            <select name="membership_type" class="form-control" id="member_membership_type">
+                                <option value=""><?php echo _l('membership_select_type'); ?></option>
+                                <?php foreach ($membership_types as $mt): ?>
+                                    <option value="<?php echo e($mt['name']); ?>"><?php echo e($mt['name']); ?> (<?php echo app_format_money($mt['amount'], get_option('currency')); ?>)</option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -199,7 +204,8 @@ function openAddMemberModal() {
     // Show the searchable select, hide the read-only display
     $('#contact_select_group').show();
     $('#contact_display_group').hide();
-    $('#member_contact_id').prop('required', true).val('').selectpicker('refresh');
+    $('#member_contact_id').prop('disabled', false).prop('required', true).val('').selectpicker('refresh');
+    $('#member_contact_id_hidden').prop('disabled', true).val('');
     $('#member_status').val('pending');
     $('#member_membership_type').val('');
     $('#member_profession').val('');
@@ -241,9 +247,9 @@ function editMember(memberId) {
             var member = response.member;
             // Hide the select, show the read-only contact name
             $('#contact_select_group').hide();
-            $('#member_contact_id').prop('required', false);
+            $('#member_contact_id').prop('disabled', true).prop('required', false);
             $('#contact_display_group').show();
-            $('#member_contact_id_hidden').val(member.contact_id || '');
+            $('#member_contact_id_hidden').prop('disabled', false).val(member.contact_id || '');
             $('#member_contact_name').text((member.firstname || '') + ' ' + (member.lastname || '') + (member.email ? ' (' + member.email + ')' : ''));
             // Populate all other fields with existing values
             $('#member_status').val(member.status || 'pending');
@@ -268,8 +274,8 @@ $('#addMemberModal').on('hidden.bs.modal', function () {
     $('#memberFormTitle').text('<?= _l('membership_add_member') ?>');
     $('#contact_select_group').show();
     $('#contact_display_group').hide();
-    $('#member_contact_id').prop('required', true).val('').selectpicker('refresh');
-    $('#member_contact_id_hidden').val('');
+    $('#member_contact_id').prop('disabled', false).prop('required', true).val('').selectpicker('refresh');
+    $('#member_contact_id_hidden').prop('disabled', true).val('');
     $('#member_contact_name').text('');
     $('#member_status').val('pending');
     $('#member_membership_type').val('');

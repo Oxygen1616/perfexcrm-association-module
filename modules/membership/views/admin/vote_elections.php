@@ -33,11 +33,11 @@
                                     <?php foreach ($elections as $election): ?>
                                         <tr>
                                             <td>
-                                                <a href="#" onclick="editElection(<?php echo $election['id']; ?>, '<?php echo addslashes($election['title']); ?>', '<?php echo addslashes($election['description']); ?>', '<?php echo date('Y-m-d\TH:i', strtotime($election['start_date'])); ?>', '<?php echo date('Y-m-d\TH:i', strtotime($election['end_date'])); ?>', '<?php echo $election['status']; ?>')">
+                                                <a href="#" onclick="editElection(<?php echo (int)$election['id']; ?>); return false;">
                                                     <?php echo e($election['title']); ?>
                                                 </a>
                                                 <div class="row-options">
-                                                    <a href="#" onclick="editElection(<?php echo $election['id']; ?>, '<?php echo addslashes($election['title']); ?>', '<?php echo addslashes($election['description']); ?>', '<?php echo date('Y-m-d\TH:i', strtotime($election['start_date'])); ?>', '<?php echo date('Y-m-d\TH:i', strtotime($election['end_date'])); ?>', '<?php echo $election['status']; ?>')">
+                                                    <a href="#" onclick="editElection(<?php echo (int)$election['id']; ?>); return false;">
                                                         <?php echo _l('membership_edit'); ?>
                                                     </a>
                                                     |
@@ -52,8 +52,11 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <?php echo date('M d, Y', strtotime($election['start_date'])); ?> -
-                                                <?php echo date('M d, Y', strtotime($election['end_date'])); ?>
+                                                <?php
+                                                $sd = $election['start_date'] ? date('M d, Y', strtotime($election['start_date'])) : '—';
+                                                $ed = $election['end_date']   ? date('M d, Y', strtotime($election['end_date']))   : '—';
+                                                echo $sd . ' – ' . $ed;
+                                                ?>
                                             </td>
                                             <td>
                                                 <span class="label label-<?php echo $election['status'] == 'active' ? 'success' : ($election['status'] == 'draft' ? 'warning' : 'default'); ?>">
@@ -83,7 +86,7 @@
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
                 <h4 class="modal-title"><?php echo _l('membership_add_election'); ?></h4>
             </div>
-            <?php echo form_open(admin_url('membership/vote_elections')); ?>
+            <?php echo form_open(admin_url('membership/elections')); ?>
             <div class="modal-body">
                 <input type="hidden" name="id" id="election_id" value="">
                 <div class="row">
@@ -99,6 +102,15 @@
                         <div class="form-group">
                             <label><?php echo _l('membership_description'); ?></label>
                             <textarea name="description" id="election_description" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label><?php echo _l('membership_positions'); ?> <small class="text-muted">(<?php echo _l('membership_positions_hint'); ?>)</small></label>
+                            <input type="text" name="positions" id="election_positions" class="form-control"
+                                   placeholder="<?php echo _l('membership_positions_placeholder'); ?>">
                         </div>
                     </div>
                 </div>
@@ -139,25 +151,47 @@
 </div>
 
 <script>
-function editElection(id, title, description, start_date, end_date, status) {
-    document.getElementById('election_id').value = id;
-    document.getElementById('election_title').value = title;
-    document.getElementById('election_description').value = description;
-    document.getElementById('election_start_date').value = start_date;
-    document.getElementById('election_end_date').value = end_date;
-    document.getElementById('election_status').value = status;
-    document.querySelector('#electionModal .modal-title').textContent = '<?php echo _l('membership_edit_election'); ?>';
-    $('#electionModal').modal('show');
+function formatDateLocal(dt) {
+    if (!dt) return '';
+    return dt.replace(' ', 'T').substring(0, 16);
+}
+
+function editElection(id) {
+    $.ajax({
+        url: '<?php echo admin_url('membership/ajax_get_election_data'); ?>/' + id,
+        type: 'GET',
+        dataType: 'json',
+        success: function(resp) {
+            if (!resp || !resp.success) {
+                alert_float('danger', (resp && resp.message) ? resp.message : '<?php echo _l('membership_election_not_found'); ?>');
+                return;
+            }
+            var el = resp.election;
+            $('#election_id').val(el.id);
+            $('#election_title').val(el.title);
+            $('#election_description').val(el.description || '');
+            $('#election_positions').val(el.positions || '');
+            $('#election_start_date').val(formatDateLocal(el.start_date));
+            $('#election_end_date').val(formatDateLocal(el.end_date));
+            $('#election_status').val(el.status);
+            $('#electionModal .modal-title').text('<?php echo _l('membership_edit_election'); ?>');
+            $('#electionModal').modal('show');
+        },
+        error: function(xhr) {
+            alert_float('danger', '<?php echo _l('membership_election_not_found'); ?>');
+        }
+    });
 }
 
 $('#electionModal').on('hidden.bs.modal', function() {
-    document.getElementById('election_id').value = '';
-    document.getElementById('election_title').value = '';
-    document.getElementById('election_description').value = '';
-    document.getElementById('election_start_date').value = '';
-    document.getElementById('election_end_date').value = '';
-    document.getElementById('election_status').value = 'draft';
-    document.querySelector('#electionModal .modal-title').textContent = '<?php echo _l('membership_add_election'); ?>';
+    $('#election_id').val('');
+    $('#election_title').val('');
+    $('#election_description').val('');
+    $('#election_positions').val('');
+    $('#election_start_date').val('');
+    $('#election_end_date').val('');
+    $('#election_status').val('draft');
+    $('#electionModal .modal-title').text('<?php echo _l('membership_add_election'); ?>');
 });
 </script>
 

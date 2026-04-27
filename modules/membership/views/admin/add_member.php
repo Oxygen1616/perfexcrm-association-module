@@ -36,7 +36,17 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label><?php echo _l('membership_member_type'); ?></label>
-                                    <input type="text" name="membership_type" class="form-control">
+                                    <select name="membership_type" class="form-control">
+                                        <option value=""><?php echo _l('membership_select_type'); ?></option>
+                                        <?php
+                                        $CI = &get_instance();
+                                        $CI->load->model('membership/membership_model');
+                                        $add_member_types = $CI->membership_model->get_membership_types('active');
+                                        foreach ($add_member_types as $mt):
+                                        ?>
+                                            <option value="<?php echo e($mt['name']); ?>"><?php echo e($mt['name']); ?> (<?php echo app_format_money($mt['amount'], get_option('currency')); ?>)</option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
